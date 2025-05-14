@@ -2,8 +2,11 @@ from langgraph.graph import StateGraph, MessagesState, START
 from langchain_mcp_adapters.client import MultiServerMCPClient
 from langchain_core.messages import SystemMessage
 from langgraph.prebuilt import tools_condition, ToolNode
-from langchain_ollama import ChatOllama
+from langchain_openai import ChatOpenAI
 import os
+from configuration import Configuration
+
+config = Configuration()
 
 def get_mcpclient():
     return MultiServerMCPClient({
@@ -15,11 +18,10 @@ def get_mcpclient():
     )
 
 async def get_graph(client) -> StateGraph:
-
-    llm = ChatOllama(
-        model="llama3.1",
-        openai_api_key="http://localhost:11434/v1",
-        openai_api_base="dummy",
+    llm = ChatOpenAI(
+        model=config.llm_model,
+        openai_api_key=config.llm_api_key,
+        openai_api_base=config.llm_api_base,
         temperature=0,
     )
     llm_with_tools = llm.bind_tools(client.get_tools())
@@ -45,4 +47,5 @@ async def get_graph(client) -> StateGraph:
     # Compile graph
     graph = builder.compile()
     return graph
+
 
