@@ -10,6 +10,9 @@ from pydantic_settings import BaseSettings
 from langchain_openai import ChatOpenAI
 from dotenv import load_dotenv
 import os
+from openinference.instrumentation.langchain import LangChainInstrumentor
+
+LangChainInstrumentor().instrument()
 
 load_dotenv()
 
