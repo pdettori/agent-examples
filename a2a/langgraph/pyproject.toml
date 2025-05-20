@@ -15,6 +15,7 @@ dependencies = [
     "pydantic-settings>=2.9.1",
     "python-dotenv>=1.1.0",
     "openinference-instrumentation-langchain>=0.1.36",
+    "opentelemetry-exporter-otlp>=1.33.1"
 ]
 
 [tool.hatch.build.targets.wheel]
