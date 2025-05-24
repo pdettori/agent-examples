@@ -84,7 +84,7 @@ server = Server()
         },
     )
 )
-async def ollama_deep_researcher(input: list[Message]) -> AsyncIterator:
+async def acp_ollama_researcher(input: list[Message]) -> AsyncIterator:
     """
     The agent performs AI-driven research by generating queries, gathering web data, summarizing findings, and refining
     results through iterative knowledge gap analysis.

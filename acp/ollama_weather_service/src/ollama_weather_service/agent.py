@@ -65,7 +65,7 @@ server = Server()
         },
     )
 )
-async def ollama_weather_service(input: list[Message]) -> AsyncIterator:
+async def acp_weather_service(input: list[Message]) -> AsyncIterator:
     """
     The agent allows to retrieve weather info through a natural language conversatinal interface
     """
