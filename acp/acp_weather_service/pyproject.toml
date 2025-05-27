@@ -1,5 +1,5 @@
 [project]
-name = "ollama-weather-service"
+name = "acp-weather-service"
 version = "0.0.1"
 description = "Simple ollama-based Langgraph agent with MCP tool calling."
 authors = [
@@ -23,7 +23,7 @@ dependencies = [
 ]
 
 [project.scripts]
-server = "ollama_weather_service.agent:run"
+server = "acp_weather_service.agent:run"
 
 
 [build-system]

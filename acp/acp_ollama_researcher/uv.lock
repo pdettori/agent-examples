@@ -1,10 +1,40 @@
 version = 1
-revision = 1
 requires-python = ">=3.11"
 resolution-markers = [
     "python_full_version >= '3.13'",
     "python_full_version >= '3.12.4' and python_full_version < '3.13'",
     "python_full_version < '3.12.4'",
+]
+
+[[package]]
+name = "acp-ollama-researcher"
+version = "0.0.1"
+source = { editable = "." }
+dependencies = [
+    { name = "acp-sdk" },
+    { name = "beautifulsoup4" },
+    { name = "duckduckgo-search" },
+    { name = "langchain-community" },
+    { name = "langchain-ollama" },
+    { name = "langchain-openai" },
+    { name = "langgraph" },
+    { name = "openinference-instrumentation-langchain" },
+    { name = "pydantic-settings" },
+    { name = "tavily-python" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "acp-sdk", specifier = ">=0.8.1" },
+    { name = "beautifulsoup4", specifier = ">=4.13.3" },
+    { name = "duckduckgo-search", specifier = "~=7.5.5" },
+    { name = "langchain-community", specifier = ">=0.3.9" },
+    { name = "langchain-ollama", specifier = ">=0.2.1" },
+    { name = "langchain-openai", specifier = ">=0.3.7" },
+    { name = "langgraph", specifier = ">=0.2.55" },
+    { name = "openinference-instrumentation-langchain", specifier = ">=0.1.36" },
+    { name = "pydantic-settings", specifier = ">=2.8.1" },
+    { name = "tavily-python", specifier = ">=0.5.0" },
 ]
 
 [[package]]
@@ -1187,37 +1217,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/e2/64/709dc99030f8f46ec552f0a7da73bbdcc2da58666abfec4742ccdb2e800e/ollama-0.4.8.tar.gz", hash = "sha256:1121439d49b96fa8339842965d0616eba5deb9f8c790786cdf4c0b3df4833802", size = 12972 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/33/3f/164de150e983b3a16e8bf3d4355625e51a357e7b3b1deebe9cc1f7cb9af8/ollama-0.4.8-py3-none-any.whl", hash = "sha256:04312af2c5e72449aaebac4a2776f52ef010877c554103419d3f36066fe8af4c", size = 13325 },
-]
-
-[[package]]
-name = "ollama-deep-researcher"
-version = "0.0.1"
-source = { editable = "." }
-dependencies = [
-    { name = "acp-sdk" },
-    { name = "beautifulsoup4" },
-    { name = "duckduckgo-search" },
-    { name = "langchain-community" },
-    { name = "langchain-ollama" },
-    { name = "langchain-openai" },
-    { name = "langgraph" },
-    { name = "openinference-instrumentation-langchain" },
-    { name = "pydantic-settings" },
-    { name = "tavily-python" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "acp-sdk", specifier = ">=0.8.1" },
-    { name = "beautifulsoup4", specifier = ">=4.13.3" },
-    { name = "duckduckgo-search", specifier = "~=7.5.5" },
-    { name = "langchain-community", specifier = ">=0.3.9" },
-    { name = "langchain-ollama", specifier = ">=0.2.1" },
-    { name = "langchain-openai", specifier = ">=0.3.7" },
-    { name = "langgraph", specifier = ">=0.2.55" },
-    { name = "openinference-instrumentation-langchain", specifier = ">=0.1.36" },
-    { name = "pydantic-settings", specifier = ">=2.8.1" },
-    { name = "tavily-python", specifier = ">=0.5.0" },
 ]
 
 [[package]]

@@ -1,4 +1,4 @@
-FROM python:3.11-slim-bookworm
+FROM public.ecr.aws/docker/library/python:3.11-slim-bookworm
 ARG RELEASE_VERSION="main"
 COPY --from=ghcr.io/astral-sh/uv:0.6.16 /uv /bin/
 WORKDIR /app

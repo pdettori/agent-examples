@@ -7,8 +7,8 @@ from acp_sdk.server import Server
 from openinference.instrumentation.langchain import LangChainInstrumentor
 from pydantic import AnyUrl
 
-from ollama_deep_researcher.graph import graph
-from ollama_deep_researcher.state import SummaryStateInput
+from acp_ollama_researcher.graph import graph
+from acp_ollama_researcher.state import SummaryStateInput
 
 LangChainInstrumentor().instrument()
 
