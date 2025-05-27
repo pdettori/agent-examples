@@ -1,5 +1,5 @@
 [project]
-name = "ollama-deep-researcher"
+name = "acp-ollama-researcher"
 version = "0.0.1"
 description = "Lightweight web research and summarization assistant."
 authors = [
@@ -22,7 +22,7 @@ dependencies = [
 ]
 
 [project.scripts]
-server = "ollama_deep_researcher.agent:run"
+server = "acp_ollama_researcher.agent:run"
 
 [build-system]
 requires = ["hatchling"]

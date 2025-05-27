@@ -6,16 +6,16 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_openai import ChatOpenAI
 from langgraph.graph import START, END, StateGraph
 
-from ollama_deep_researcher.configuration import Configuration, SearchAPI
-from ollama_deep_researcher.utils import (
+from acp_ollama_researcher.configuration import Configuration, SearchAPI
+from acp_ollama_researcher.utils import (
     deduplicate_and_format_sources,
     tavily_search,
     format_sources,
     perplexity_search,
     duckduckgo_search,
 )
-from ollama_deep_researcher.state import SummaryState, SummaryStateInput, SummaryStateOutput
-from ollama_deep_researcher.prompts import query_writer_instructions, summarizer_instructions, reflection_instructions
+from acp_ollama_researcher.state import SummaryState, SummaryStateInput, SummaryStateOutput
+from acp_ollama_researcher.prompts import query_writer_instructions, summarizer_instructions, reflection_instructions
 
 config = Configuration()
 

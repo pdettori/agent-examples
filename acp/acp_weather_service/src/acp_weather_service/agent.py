@@ -8,7 +8,7 @@ from openinference.instrumentation.langchain import LangChainInstrumentor
 from pydantic import AnyUrl
 from langchain_core.messages import HumanMessage
 
-from ollama_weather_service.graph import get_graph, get_mcpclient
+from acp_weather_service.graph import get_graph, get_mcpclient
 
 
 LangChainInstrumentor().instrument()
