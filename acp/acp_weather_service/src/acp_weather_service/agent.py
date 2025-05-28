@@ -9,11 +9,33 @@ from pydantic import AnyUrl
 from langchain_core.messages import HumanMessage
 
 from acp_weather_service.graph import get_graph, get_mcpclient
+from keycloak import KeycloakOpenID
 
 
 LangChainInstrumentor().instrument()
 
 server = Server()
+
+def get_token() -> str:
+    keycloak_url = os.getenv("KEYCLOAK_URL", "http://keycloak.localtest.me:8080")
+    client_id = "weather-agent"
+    realm_name = "demo"
+    client_secret = os.getenv("CLIENT_SECRET")
+
+    user_username = "test-user"
+    user_password = "test-password"
+
+    keycloak_openid = KeycloakOpenID(server_url=keycloak_url,
+                                    client_id=client_id,
+                                    realm_name=realm_name,
+                                    client_secret_key=client_secret)
+
+    access_token = keycloak_openid.token(
+            username=user_username,
+            password=user_password)
+
+    print(f"received access_token: {access_token}")
+    return access_token
 
 
 @server.agent(
@@ -72,6 +94,11 @@ async def acp_weather_service(input: list[Message]) -> AsyncIterator:
     messages = [HumanMessage(content=input[-1].parts[-1].content)]
     input = {"messages": messages}
     print(f"{input}")
+
+    # demo - if keycloak is enabled, try to acquire token
+    if os.getenv("KEYCLOAK_URL"):
+        token = get_token()
+
     try:
         output = None
         async with get_mcpclient() as mcpclient:
