@@ -3,6 +3,7 @@ from textwrap import dedent
 from typing import AsyncIterator
 
 from acp_sdk import Metadata, Message, Link, LinkType, MessagePart
+from acp_sdk.models.errors import ACPError, Error, ErrorCode
 from acp_sdk.server import Server
 from openinference.instrumentation.langchain import LangChainInstrumentor
 from pydantic import AnyUrl
@@ -25,14 +26,17 @@ def get_token() -> str:
     user_username = "test-user"
     user_password = "test-password"
 
-    keycloak_openid = KeycloakOpenID(server_url=keycloak_url,
-                                    client_id=client_id,
-                                    realm_name=realm_name,
-                                    client_secret_key=client_secret)
-
-    access_token = keycloak_openid.token(
-            username=user_username,
-            password=user_password)
+    try:
+        keycloak_openid = KeycloakOpenID(server_url=keycloak_url,
+                                        client_id=client_id,
+                                        realm_name=realm_name,
+                                        client_secret_key=client_secret)
+    
+        access_token = keycloak_openid.token(
+                username=user_username,
+                password=user_password)
+    except Exception as e:
+        raise Exception(f"Authorization error getting the access token: {e}")    
 
     print(f"received access_token: {access_token}")
     return access_token
@@ -96,8 +100,12 @@ async def acp_weather_service(input: list[Message]) -> AsyncIterator:
     print(f"{input}")
 
     # demo - if keycloak is enabled, try to acquire token
-    if os.getenv("KEYCLOAK_URL"):
-        token = get_token()
+    try:
+        if os.getenv("KEYCLOAK_URL"):
+            token = get_token()
+    except Exception as e:
+        yield {"message": {'type': 'run.failed', 'error': str(e)}}
+        raise ACPError(Error(code=ErrorCode.SERVER_ERROR, message=str(e))) 
 
     try:
         output = None
