@@ -1,4 +1,4 @@
-FROM public.ecr.aws/docker/library/python:3.12-slim
+FROM quay.io/pdettori/python:3.12-slim
 
 RUN apt-get update && apt-get install -y git
 
