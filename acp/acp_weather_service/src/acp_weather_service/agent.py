@@ -121,7 +121,7 @@ async def acp_weather_service(input: list[Message]) -> AsyncIterator:
                 }
                 output = event
                 print(event)
-            output = output.get("assistant", {}).get("messages")
+            output =  output.get("assistant", {}).get("final_answer")
             yield MessagePart(content=str(output))
     except Exception as e:
         raise Exception(f"An error occurred while running the graph: {e}")
