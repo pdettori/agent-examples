@@ -1,28 +1,26 @@
 [project]
 name = "a2a-sample-agent-langgraph"
 version = "0.1.0"
-description = "Sample LangGraph currency ggent with A2A Protocol"
+description = "Sample LangGraph currency agent with A2A Protocol"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "a2a-samples",
+    "a2a-sdk>=0.2.5,<0.3.0",
     "click>=8.1.8",
     "httpx>=0.28.1",
     "langchain-google-genai>=2.0.10",
-    "langchain-openai>=0.2.14",
     "langgraph>=0.3.18",
     "pydantic>=2.10.6",
-    "pydantic-settings>=2.9.1",
     "python-dotenv>=1.1.0",
+    "uvicorn>=0.34.2",
+    "langchain-openai>=0.2.14",
+    "pydantic-settings>=2.9.1",
     "openinference-instrumentation-langchain>=0.1.36",
     "opentelemetry-exporter-otlp>=1.33.1"
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = ["."]
-
-[tool.uv.sources]
-a2a-samples = { git = "https://github.com/google/A2A.git", subdirectory = "samples/python" }
+packages = ["app"]
 
 [build-system]
 requires = ["hatchling"]
