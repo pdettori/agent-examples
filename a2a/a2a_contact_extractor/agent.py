@@ -4,12 +4,19 @@ import threading
 from collections.abc import AsyncIterable
 from typing import Annotated, Any, ClassVar
 
-from common.types import TextPart
+#from common.types import TextPart
 from pydantic import BaseModel, Field
+from typing import Annotated, Any, Literal
 
 import marvin
 
 logger = logging.getLogger(__name__)
+
+
+class TextPart(BaseModel):
+    type: Literal['text'] = 'text'
+    text: str
+    metadata: dict[str, Any] | None = None
 
 
 ClarifyingQuestion = Annotated[
