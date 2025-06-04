@@ -16,6 +16,8 @@ from a2a.types import (
 
 PUBLIC_AGENT_CARD_PATH = '/.well-known/agent.json'
 EXTENDED_AGENT_CARD_PATH = '/agent/authenticatedExtendedCard'
+USER_INPUT = 'how much is 10 USD in INR?'
+#USER_INPUT = 'My name is John Doe, email: john@example.com, phone: (555) 123-4567'
 
 
 async def main() -> None:
@@ -115,7 +117,7 @@ async def main() -> None:
             'message': {
                 'role': 'user',
                 'parts': [
-                    {'kind': 'text', 'text': 'how much is 10 USD in INR?'}
+                    {'kind': 'text', 'text': USER_INPUT}
                 ],
                 'messageId': uuid4().hex,
             },
