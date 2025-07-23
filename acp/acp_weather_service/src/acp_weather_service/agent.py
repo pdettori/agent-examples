@@ -20,7 +20,7 @@ server = Server()
 def get_token() -> str:
     keycloak_url = os.getenv("KEYCLOAK_URL", "http://keycloak.localtest.me:8080")
     client_id = "weather-agent"
-    realm_name = "demo"
+    realm_name = "master"
     client_secret = os.getenv("CLIENT_SECRET")
 
     user_username = "test-user"
@@ -58,7 +58,7 @@ def get_token() -> str:
         ],
         documentation=dedent(
             """\
-            This agent provides a simple weather infor assistant.
+            This agent provides a simple weather information assistance.
 
             ## Input Parameters
             - **prompt** (string) – the city for which you want to know weather info.
