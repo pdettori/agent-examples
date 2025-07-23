@@ -58,7 +58,7 @@ def get_token() -> str:
         ],
         documentation=dedent(
             """\
-            This agent provides a simple weather infor assistant.
+            This agent provides a simple weather information assistance.
 
             ## Input Parameters
             - **prompt** (string) – the city for which you want to know weather info.
