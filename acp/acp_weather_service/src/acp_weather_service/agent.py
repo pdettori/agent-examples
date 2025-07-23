@@ -20,7 +20,7 @@ server = Server()
 def get_token() -> str:
     keycloak_url = os.getenv("KEYCLOAK_URL", "http://keycloak.localtest.me:8080")
     client_id = "weather-agent"
-    realm_name = "demo"
+    realm_name = "master"
     client_secret = os.getenv("CLIENT_SECRET")
 
     user_username = "test-user"
