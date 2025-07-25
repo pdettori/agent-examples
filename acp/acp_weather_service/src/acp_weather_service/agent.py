@@ -19,7 +19,8 @@ server = Server()
 
 def get_token() -> str:
     keycloak_url = os.getenv("KEYCLOAK_URL", "http://keycloak.localtest.me:8080")
-    client_id = "weather-agent"
+    # client_id = "weather-agent"
+    client_id = os.getenv("CLIENT_NAME")
     realm_name = "master"
     client_secret = os.getenv("CLIENT_SECRET")
 
@@ -93,7 +94,7 @@ def get_token() -> str:
 )
 async def acp_weather_service(input: list[Message]) -> AsyncIterator:
     """
-    The agent allows to retrieve weather info through a natural language conversatinal interface
+    The agent allows to retrieve weather info through a natural language conversational interface
     """
     messages = [HumanMessage(content=input[-1].parts[-1].content)]
     input = {"messages": messages}
