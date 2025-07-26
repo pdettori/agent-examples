@@ -1,3 +1,4 @@
+import logging
 import os
 from textwrap import dedent
 from typing import AsyncIterator
@@ -12,6 +13,8 @@ from langchain_core.messages import HumanMessage
 from acp_weather_service.graph import get_graph, get_mcpclient
 from keycloak import KeycloakOpenID
 
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 LangChainInstrumentor().instrument()
 
@@ -27,6 +30,11 @@ def get_token() -> str:
 
     user_username = "test-user"
     user_password = "test-password"
+
+    print(f"**** client_id: {client_id}")
+    logger.debug(
+         f"***** Using client_id='{client_id}' with realm+{realm_name}"
+    )
 
     try:
         keycloak_openid = KeycloakOpenID(server_url=keycloak_url,
