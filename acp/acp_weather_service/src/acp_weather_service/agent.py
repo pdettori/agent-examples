@@ -32,7 +32,7 @@ def get_token() -> str:
     user_password = "test-password"
 
     print(f"**** client_id: {client_id}")
-    logger.info(
+    logger.debug(
           f"***** Using client_id='{client_id}' with realm+{realm_name}"
     )
 
@@ -49,7 +49,7 @@ def get_token() -> str:
         raise Exception(f"Authorization error getting the access token: {e}")    
 
     print(f"***received access_token: {access_token}")
-    logger.info(
+    logger.debug(
           f"***** Received access token: {access_token}"
     )
     return access_token
@@ -110,15 +110,14 @@ async def acp_weather_service(input: list[Message]) -> AsyncIterator:
     """
     messages = [HumanMessage(content=input[-1].parts[-1].content)]
     input = {"messages": messages}
-    print(f"{input}")
-
-    logger.debug(f'Processing messages: {input}')
+    print(f"****{input}")
+    logger.debug(f'****Processing messages: {input}')
 
     # demo - if keycloak is enabled, try to acquire token
     try:
         if os.getenv("KEYCLOAK_URL"):
             token = get_token()
-            logger.debug(f'received token: {token}')
+            logger.debug(f'****received token: {token}')
     except Exception as e:
         yield {"message": {'type': 'run.failed', 'error': str(e)}}
         raise ACPError(Error(code=ErrorCode.SERVER_ERROR, message=str(e))) 
@@ -137,6 +136,7 @@ async def acp_weather_service(input: list[Message]) -> AsyncIterator:
                 }
                 output = event
                 print(event)
+                logger.debug(f'***event: {event}')
             output =  output.get("assistant", {}).get("final_answer")
             yield MessagePart(content=str(output))
     except Exception as e:
