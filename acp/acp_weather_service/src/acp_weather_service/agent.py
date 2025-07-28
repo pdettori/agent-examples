@@ -22,9 +22,7 @@ server = Server()
 
 def get_token() -> str:
     keycloak_url = os.getenv("KEYCLOAK_URL", "http://keycloak.localtest.me:8080")
-    # client_id = "weather-agent"
     client_id = os.getenv("CLIENT_NAME", "NOTSET")
-    # client_id = "mariusz/acp-weather-service"
     realm_name = "master"
     client_secret = os.getenv("CLIENT_SECRET")
 
@@ -32,7 +30,7 @@ def get_token() -> str:
     user_password = "test-password"
 
     print(f"**** client_id: {client_id}")
-    logger.debug(
+    logger.info(
           f"***** Using client_id='{client_id}' with realm+{realm_name}"
     )
 
@@ -49,7 +47,7 @@ def get_token() -> str:
         raise Exception(f"Authorization error getting the access token: {e}")    
 
     print(f"***received access_token: {access_token}")
-    logger.debug(
+    logger.info(
           f"***** Received access token: {access_token}"
     )
     return access_token
@@ -111,13 +109,13 @@ async def acp_weather_service(input: list[Message]) -> AsyncIterator:
     messages = [HumanMessage(content=input[-1].parts[-1].content)]
     input = {"messages": messages}
     print(f"****{input}")
-    logger.debug(f'****Processing messages: {input}')
+    logger.info(f'****Processing messages: {input}')
 
     # demo - if keycloak is enabled, try to acquire token
     try:
         if os.getenv("KEYCLOAK_URL"):
             token = get_token()
-            logger.debug(f'****received token: {token}')
+            logger.info(f'****received token: {token}')
     except Exception as e:
         yield {"message": {'type': 'run.failed', 'error': str(e)}}
         raise ACPError(Error(code=ErrorCode.SERVER_ERROR, message=str(e))) 
@@ -136,7 +134,7 @@ async def acp_weather_service(input: list[Message]) -> AsyncIterator:
                 }
                 output = event
                 print(event)
-                logger.debug(f'***event: {event}')
+                logger.info(f'***event: {event}')
             output =  output.get("assistant", {}).get("final_answer")
             yield MessagePart(content=str(output))
     except Exception as e:
