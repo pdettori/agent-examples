@@ -1,3 +1,0 @@
-# Agents
-
-Weather Service Agent
