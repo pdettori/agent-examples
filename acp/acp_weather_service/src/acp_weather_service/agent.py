@@ -31,7 +31,7 @@ def get_token() -> str:
 
     print(f"client_id: {client_id}")
     logger.info(
-          f"Using client_id='{client_id}' with realm+{realm_name}"
+          f"Using client_id='{client_id}' with realm={realm_name}"
     )
 
     try:
