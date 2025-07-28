@@ -29,7 +29,7 @@ def get_token() -> str:
     user_username = "test-user"
     user_password = "test-password"
 
-    print(f"client_id: {client_id}")
+    # print(f"client_id: {client_id}")
     logger.info(
           f"Using client_id='{client_id}' with realm={realm_name}"
     )
@@ -46,7 +46,6 @@ def get_token() -> str:
     except Exception as e:
         raise Exception(f"Authorization error getting the access token: {e}")    
 
-    print(f"Received access_token: {access_token}")
     logger.info(
           f"Received access token: {access_token}"
     )
@@ -108,7 +107,6 @@ async def acp_weather_service(input: list[Message]) -> AsyncIterator:
     """
     messages = [HumanMessage(content=input[-1].parts[-1].content)]
     input = {"messages": messages}
-    print(f"{input}")
     logger.info(f'Processing messages: {input}')
 
     # demo - if keycloak is enabled, try to acquire token
@@ -133,7 +131,6 @@ async def acp_weather_service(input: list[Message]) -> AsyncIterator:
                     + "\n"
                 }
                 output = event
-                print(event)
                 logger.info(f'event: {event}')
             output =  output.get("assistant", {}).get("final_answer")
             yield MessagePart(content=str(output))
