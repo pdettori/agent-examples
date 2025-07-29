@@ -1,3 +1,4 @@
+import os
 import requests
 from mcp.server.fastmcp import FastMCP
 
@@ -27,8 +28,10 @@ def get_weather(city: str) -> str:
     return weather_data["current_weather"]
 
 # host can be specified with HOST env variable
+# transport can be specified with MCP_TRANSPORT env variable (defaults to sse)
 def run_server():
-    mcp.run(transport="sse") 
+    transport = os.getenv("MCP_TRANSPORT", "sse")
+    mcp.run(transport=transport) 
 
 if __name__ == "__main__":
     run_server()
