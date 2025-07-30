@@ -16,7 +16,7 @@ def get_mcpclient():
     return MultiServerMCPClient({
         "math": {
             "url": os.getenv("MCP_URL", "http://localhost:8000/sse"),
-            "transport": "sse",
+            "transport": os.getenv("ACP_MCP_TRANSPORT", "sse"),
         }
     })
 
@@ -27,7 +27,10 @@ async def get_graph(client) -> StateGraph:
         openai_api_base=config.llm_api_base,
         temperature=0,
     )
-    llm_with_tools = llm.bind_tools(client.get_tools())
+    
+    # Get tools asynchronously
+    tools = await client.get_tools()
+    llm_with_tools = llm.bind_tools(tools)
 
     # System message
     sys_msg = SystemMessage(content="You are a helpful assistant tasked with providing weather information. You must use the provided tools to complete your task.")
@@ -46,7 +49,7 @@ async def get_graph(client) -> StateGraph:
     # Build graph
     builder = StateGraph(ExtendedMessagesState)
     builder.add_node("assistant", assistant)
-    builder.add_node("tools", ToolNode(client.get_tools()))
+    builder.add_node("tools", ToolNode(tools))
     builder.add_edge(START, "assistant")
     builder.add_conditional_edges(
         "assistant",
@@ -60,14 +63,14 @@ async def get_graph(client) -> StateGraph:
 
 # async def main():
 #     from langchain_core.messages import HumanMessage
-#     async with get_mcpclient() as client:
-#         graph = await get_graph(client)
-#         messages = [HumanMessage(content="how is the weather in NY today?")]
-#         async for event in graph.astream_events({"messages": messages}, stream_mode="updates"):
-#             print(event)
-#             output = event
-#         output = output.get("data",{}).get("output",{}).get("final_answer")
-#         print(f">>> {output}")
+#     client = get_mcpclient()
+#     graph = await get_graph(client)
+#     messages = [HumanMessage(content="how is the weather in NY today?")]
+#     async for event in graph.astream({"messages": messages}, stream_mode="updates"):
+#         print(event)
+#         output = event
+#     output = output.get("assistant", {}).get("final_answer")
+#     print(f">>> {output}")
 
 # if __name__ == "__main__":
 #     import asyncio
