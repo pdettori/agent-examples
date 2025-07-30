@@ -85,6 +85,7 @@ def get_token() -> str:
             {"name": "LLM_API_BASE", "description": "Base URL for OpenAI-compatible API endpoint"},
             {"name": "LLM_API_KEY", "description": "API key for OpenAI-compatible API endpoint"},
             {"name": "MCP_URL", "description": "MCP Server URL for the weather tool"},
+            {"name": "ACP_MCP_TRANSPORT", "description": "MCP transport type: sse, stdio, streamable_http, websocket (defaults to 'sse')"},
         ],
         ui={"type": "hands-off", "user_greeting": "Ask me about the weather"},
         examples={
@@ -120,22 +121,37 @@ async def acp_weather_service(input: list[Message]) -> AsyncIterator:
 
     try:
         output = None
-        async with get_mcpclient() as mcpclient:
-            graph = await get_graph(mcpclient)
-            async for event in graph.astream(input, stream_mode="updates"):
-                yield {
-                    "message": "\n".join(
-                        f"🚶‍♂️{key}: {str(value)[:100] + '...' if len(str(value)) > 100 else str(value)}"
-                        for key, value in event.items()
-                    )
-                    + "\n"
-                }
-                output = event
-                logger.info(f'event: {event}')
-            output =  output.get("assistant", {}).get("final_answer")
-            yield MessagePart(content=str(output))
+        # Test MCP connection first
+        logger.info(f'Attempting to connect to MCP server at: {os.getenv("MCP_URL", "http://localhost:8000/sse")}')
+        
+        mcpclient = get_mcpclient()
+        
+        # Try to get tools to verify connection
+        try:
+            tools = await mcpclient.get_tools()
+            logger.info(f'Successfully connected to MCP server. Available tools: {[tool.name for tool in tools]}')
+        except Exception as tool_error:
+            logger.error(f'Failed to connect to MCP server: {tool_error}')
+            yield MessagePart(content=f"Error: Cannot connect to MCP weather service at {os.getenv('MCP_URL', 'http://localhost:8000/sse')}. Please ensure the weather MCP server is running. Error: {tool_error}")
+            return
+            
+        graph = await get_graph(mcpclient)
+        async for event in graph.astream(input, stream_mode="updates"):
+            yield {
+                "message": "\n".join(
+                    f"🚶‍♂️{key}: {str(value)[:100] + '...' if len(str(value)) > 100 else str(value)}"
+                    for key, value in event.items()
+                )
+                + "\n"
+            }
+            output = event
+            logger.info(f'event: {event}')
+        output =  output.get("assistant", {}).get("final_answer")
+        yield MessagePart(content=str(output))
     except Exception as e:
-        raise Exception(f"An error occurred while running the graph: {e}")
+        logger.error(f'Graph execution error: {e}')
+        yield MessagePart(content=f"Error: Failed to process weather request. {str(e)}")
+        raise ACPError(Error(code=ErrorCode.SERVER_ERROR, message=str(e)))
 
 
 def run():
