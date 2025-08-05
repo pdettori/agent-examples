@@ -69,7 +69,7 @@ def get_channel_history(channel_id: str, limit: int = 20) -> List:
         return [{"error": f"An unexpected error occurred: {e}"}]
 
 # host can be specified with HOST env variable
-# transport can be specified with MCP_TRANSPORT env variable (defaults to sse)
+# transport can be specified with MCP_TRANSPORT env variable (defaults to streamable-http)
 def run_server():
     transport = os.getenv("MCP_TRANSPORT", "streamable-http")
     mcp.run(transport=transport) 
