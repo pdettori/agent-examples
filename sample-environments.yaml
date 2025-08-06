@@ -35,6 +35,6 @@ data:
     [
       {
         "name": "SLACK_BOT_TOKEN", 
-        "valueFrom": {"secretKeyRef": {"name": "slack-secret", "key": "bottoken"}}
+        "valueFrom": {"secretKeyRef": {"name": "slack-secret", "key": "bot-token"}}
       }
     ]
