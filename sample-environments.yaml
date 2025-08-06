@@ -1,0 +1,40 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sample-environments
+data:
+  ollama: |
+    [
+      {"name": "LLM_API_BASE", "value": "http://host.docker.internal:11434/v1"},
+      {"name": "LLM_API_KEY", "value": "dummy"},
+      {"name": "LLM_MODEL", "value": "llama3.2:3b-instruct-fp16"}
+    ]
+  openai: |
+    [
+      {
+        "name": "OPENAI_API_KEY",
+        "valueFrom": {"secretKeyRef": {"name": "openai-secret", "key": "apikey"}}
+      },
+      {
+        "name": "LLM_API_KEY",
+        "valueFrom": {"secretKeyRef": {"name": "openai-secret", "key": "apikey"}}
+      },
+      {"name": "LLM_API_BASE", "value": "https://api.openai.com/v1"},
+      {"name": "LLM_MODEL", "value": "gpt-4o-mini-2024-07-18"}
+    ]
+  # mcp weather assumes we are using streamable-transport
+  mcp-weather: |
+    [
+      {"name": "MCP_URL", "value": "http://weather-tool:8000/mcp"}
+    ]
+  mcp-slack: |
+    [
+      {"name": "MCP_URL", "value": "http://slack-tool:8000/mcp"}
+    ]
+  mcp-slack-config: |
+    [
+      {
+        "name": "SLACK_BOT_TOKEN", 
+        "valueFrom": {"secretKeyRef": {"name": "slack-secret", "key": "bot-token"}}
+      }
+    ]
