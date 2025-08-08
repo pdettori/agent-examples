@@ -11,6 +11,7 @@ You can configure the server with the following environment variables:
 | ----------------- | --------- | ---------------------- | ----------------------------- |
 | `SLACK_BOT_TOKEN` | Yes       | `YOUR_SLACK_BOT_TOKEN` | Access token for the Slack server |
 | `MCP_TRANSPORT`   | No        | `streamable-http`      | Passed into mcp.run to determine mcp transport |
+| `ISSUER`          | No        | `your-oauth-provider`  | If populated, will attempt to extract bearer token, fail otherwise |
 
 You can run this locally with `uv run slack_tool.py` so long as the `SLACK_BOT_TOKEN` is set. 
 
