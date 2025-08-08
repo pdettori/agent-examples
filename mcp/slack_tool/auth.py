@@ -17,15 +17,15 @@ class SimpleTokenVerifier(TokenVerifier):
                 )
 
 def get_token_verifier():
-    issuer = os.getenv("ISSUER", "your-oauth-provider")
-    if issuer == "your-oauth-provider":
+    issuer = os.getenv("ISSUER")
+    if issuer is None:
         return None
     else:
         return SimpleTokenVerifier()
 
 def get_auth():
-    issuer = os.getenv("ISSUER", "your-oauth-provider")
-    if issuer == "your-oauth-provider":
+    issuer = os.getenv("ISSUER")
+    if issuer is None:
         return None
     else:
         return AuthSettings(
