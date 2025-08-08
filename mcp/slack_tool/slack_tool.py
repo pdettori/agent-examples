@@ -3,7 +3,7 @@ from typing import List, Dict, Any
 from mcp.server.fastmcp import FastMCP
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
-from .auth import get_token_verifier, get_auth
+from auth import get_token_verifier, get_auth
 
 # setup slack client
 SLACK_BOT_TOKEN = os.getenv("SLACK_BOT_TOKEN", "YOUR_SLACK_BOT_TOKEN")
