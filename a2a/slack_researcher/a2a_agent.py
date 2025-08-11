@@ -9,7 +9,6 @@ from typing import Callable
 import uvicorn
 from autogen.mcp.mcp_client import create_toolkit, Toolkit
 from mcp import ClientSession
-from mcp.client.sse import sse_client
 from mcp.client.streamable_http import streamablehttp_client
 
 from a2a.server.agent_execution import AgentExecutor, RequestContext
@@ -20,19 +19,12 @@ from a2a.server.tasks import InMemoryTaskStore, TaskUpdater
 from a2a.types import AgentCapabilities, AgentCard, AgentSkill, TaskState, SecurityScheme, HTTPAuthSecurityScheme
 from a2a.utils import new_agent_text_message, new_task
 
-from starlette.authentication import AuthCredentials, SimpleUser, UnauthenticatedUser, AuthenticationBackend, AuthenticationError
-from starlette.middleware import Middleware
+from starlette.authentication import AuthCredentials, SimpleUser, AuthenticationBackend
 from starlette.middleware.authentication import AuthenticationMiddleware
-from starlette.applications import Starlette
-from starlette.routing import Route
-from starlette.responses import PlainTextResponse
 
-from slack_researcher.auth import get_auth, get_token_verifier
 from slack_researcher.config import settings, Settings
 from slack_researcher.event import Event
-from slack_researcher.auth import get_keyclock_token
 from slack_researcher.main import RagAgent
-from slack_researcher.tools.tavily_search import search
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, stream=sys.stdout, format='%(levelname)s: %(message)s')
