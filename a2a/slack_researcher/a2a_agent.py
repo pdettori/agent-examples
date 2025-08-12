@@ -212,7 +212,7 @@ class ResearchExecutor(AgentExecutor):
 
         except Exception as e:
             logger.error(repr(e))
-            raise e
+            event_emitter.emit_event(f"Exception encountered: {str(e)}", True)
 
     async def cancel(self, context: RequestContext, event_queue: EventQueue) -> None:
         """

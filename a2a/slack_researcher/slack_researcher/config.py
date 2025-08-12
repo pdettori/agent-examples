@@ -32,15 +32,7 @@ class Settings(BaseSettings):
         description="The maximum number of plan steps",
         ge=1,
     )
-    TAVILY_API_KEY: str = Field(os.getenv("TAVILY_API_KEY", ""), description="The key for Tavily API")
     MCP_ENDPOINT: str = Field(os.getenv("MCP_ENDPOINT", ""), description="Endpoint for an option MCP server")
-    MCP_TRANSPORT: Literal["sse", "streamable_http"] = Field(
-        os.getenv(
-            "MCP_TRANSPORT",
-            "streamable_http"),
-            description="The transport method of your MCP server. sse or streamable_http")
-    KEYCLOAK_URL: str = Field(os.getenv("KEYCLOAK_URL", "http://keycloak.localtest.me:8080"),
-                              descripiton="URL of keycloak server")
     SERVICE_PORT: int = Field(os.getenv("SERVICE_URL", 8000), description="Port on which the service will run.")
 
     class Config:
