@@ -57,8 +57,8 @@ def get_agent_card(host: str, port: int):
         description="Answer queries by searching thorugh a given slack server",
         tags=["research", "slack", "search", "report"],
         examples=[
-            "Find tme the most popular channels for discussing AI agents",
-            "Summarize what's been happening in the general channel latley",
+            "Find me the most popular channels for discussing AI agents",
+            "Summarize what's been happening in the general channel lateley",
         ],
     )
     return AgentCard(

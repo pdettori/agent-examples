@@ -20,7 +20,7 @@ class Settings(BaseSettings):
         os.getenv("OPENAI_API_URL", "http://localhost:11434/v1"),
         description="The URL for OpenAI API",
     )
-    OPENAI_API_KEY: str = Field(os.getenv("OPENAI_API_KEY", "ollama"), description="The key for OpenAI API")
+    OPENAI_API_KEY: str = Field(os.getenv("OPENAI_API_KEY", "my_api_key"), description="The key for OpenAI API")
     EXTRA_HEADERS: dict = Field({}, description="Extra headers for the OpenAI API")
     MODEL_TEMPERATURE: float = Field(
         os.getenv("MODEL_TEMPERATURE", 0),
