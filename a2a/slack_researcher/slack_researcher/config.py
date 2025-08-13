@@ -49,12 +49,4 @@ class Settings(BaseSettings):
 
         return self
 
-    @model_validator(mode="after")
-    def set_secondary_env(self) -> "Settings":
-        if "TAVILY_API_KEY" not in os.environ:
-            os.environ["TAVILY_API_KEY"] = str(self.TAVILY_API_KEY)
-
-        return self
-
-
 settings = Settings()  # type: ignore[call-arg]
