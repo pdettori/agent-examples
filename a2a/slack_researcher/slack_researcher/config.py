@@ -16,11 +16,11 @@ class Settings(BaseSettings):
         os.getenv("TASK_MODEL_ID", "granite3.3:8b"),
         description="The ID of the task model",
     )
-    OPENAI_API_URL: str = Field(
-        os.getenv("OPENAI_API_URL", "http://localhost:11434/v1"),
+    LLM_API_BASE: str = Field(
+        os.getenv("LLM_API_BASE", "http://localhost:11434/v1"),
         description="The URL for OpenAI API",
     )
-    OPENAI_API_KEY: str = Field(os.getenv("OPENAI_API_KEY", "my_api_key"), description="The key for OpenAI API")
+    LLM_API_KEY: str = Field(os.getenv("LLM_API_KEY", "my_api_key"), description="The key for OpenAI API")
     EXTRA_HEADERS: dict = Field({}, description="Extra headers for the OpenAI API")
     MODEL_TEMPERATURE: float = Field(
         os.getenv("MODEL_TEMPERATURE", 0),
@@ -32,7 +32,7 @@ class Settings(BaseSettings):
         description="The maximum number of plan steps",
         ge=1,
     )
-    MCP_ENDPOINT: str = Field(os.getenv("MCP_ENDPOINT", ""), description="Endpoint for an option MCP server")
+    MCP_URL: str = Field(os.getenv("MCP_ENDPOINT", "http://slack-tool:8000"), description="Endpoint for an option MCP server")
     SERVICE_PORT: int = Field(os.getenv("SERVICE_URL", 8000), description="Port on which the service will run.")
 
     class Config:

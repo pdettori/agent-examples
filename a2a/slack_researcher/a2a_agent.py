@@ -181,15 +181,15 @@ class ResearchExecutor(AgentExecutor):
         # Hook up MCP tools
         toolkit = None
         try:
-            if settings.MCP_ENDPOINT:
-                logging.debug("Connecting to MCP server at %s", settings.MCP_ENDPOINT)
+            if settings.MCP_URL:
+                logging.debug("Connecting to MCP server at %s", settings.MCP_URL)
 
                 headers={}
                 if user_token:
                     headers={"Authorization": f"Bearer {user_token}"}
 
                 async with streamablehttp_client(
-                    url=settings.MCP_ENDPOINT,
+                    url=settings.MCP_URL,
                     headers=headers
                 )  as (
                     read_stream,
