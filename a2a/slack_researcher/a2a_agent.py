@@ -4,6 +4,7 @@ Module for A2A Agent.
 
 import logging
 import sys
+import traceback
 from typing import Callable
 
 import uvicorn
@@ -16,7 +17,7 @@ from a2a.server.apps import A2AStarletteApplication
 from a2a.server.events.event_queue import EventQueue
 from a2a.server.request_handlers import DefaultRequestHandler
 from a2a.server.tasks import InMemoryTaskStore, TaskUpdater
-from a2a.types import AgentCapabilities, AgentCard, AgentSkill, TaskState, SecurityScheme, HTTPAuthSecurityScheme
+from a2a.types import AgentCapabilities, AgentCard, AgentSkill, TaskState, TextPart, SecurityScheme, HTTPAuthSecurityScheme
 from a2a.utils import new_agent_text_message, new_task
 
 from starlette.authentication import AuthCredentials, SimpleUser, AuthenticationBackend
@@ -111,11 +112,9 @@ class A2AEvent(Event):
         logger.info("Emitting event %s", message)
 
         if final:
-            await self.task_updater.complete(
-                new_agent_text_message(
-                    message, self.task_updater.context_id, self.task_updater.task_id
-                )
-            )
+            parts = [TextPart(text=message)]
+            await self.task_updater.add_artifact(parts)
+            await self.task_updater.complete()
         else:
             await self.task_updater.update_status(
                 TaskState.working,
@@ -211,7 +210,8 @@ class ResearchExecutor(AgentExecutor):
                     toolkit,)
 
         except Exception as e:
-            logger.error(repr(e))
+            traceback_string = traceback.format_exc()
+            logger.error(repr(traceback_string))
             await event_emitter.emit_event(f"Exception encountered: {str(e)}", True)
 
     async def cancel(self, context: RequestContext, event_queue: EventQueue) -> None:
