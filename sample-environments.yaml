@@ -44,6 +44,6 @@ data:
       {"name": "EXTRA_HEADERS", "value": "{}"},
       {"name": "MODEL_TEMPERATURE", "value": "0"},
       {"name": "MAX_PLAN_STEPS", "value": "6"},
-      {"name": "MCP_ENDPOINT", "value": "http://slack-tool:8000"},
-      {"name": "SERVICE_PORT", "value": "8000"}
+      {"name": "SERVICE_PORT", "value": "8000"},
+      {"name": "LOG_LEVEL", "value": "INFO"}
     ]

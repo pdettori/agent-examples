@@ -7,11 +7,12 @@ from pydantic import model_validator
 from pydantic import Field
 from typing import Literal
 
-logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.DEBUG, stream=sys.stdout, format='%(levelname)s: %(message)s')
-
 
 class Settings(BaseSettings):
+    LOG_LEVEL: Literal['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'] = Field(
+        os.getenv("LOG_LEVEL", "DEBUG"),
+        description="Application log level",       
+    )
     TASK_MODEL_ID: str = Field(
         os.getenv("TASK_MODEL_ID", "granite3.3:8b"),
         description="The ID of the task model",
@@ -32,7 +33,7 @@ class Settings(BaseSettings):
         description="The maximum number of plan steps",
         ge=1,
     )
-    MCP_URL: str = Field(os.getenv("MCP_ENDPOINT", "http://slack-tool:8000"), description="Endpoint for an option MCP server")
+    MCP_URL: str = Field(os.getenv("MCP_URL", "http://slack-tool:8000"), description="Endpoint for an option MCP server")
     SERVICE_PORT: int = Field(os.getenv("SERVICE_URL", 8000), description="Port on which the service will run.")
 
     class Config:

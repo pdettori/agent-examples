@@ -181,7 +181,7 @@ class ResearchExecutor(AgentExecutor):
         toolkit = None
         try:
             if settings.MCP_URL:
-                logging.debug("Connecting to MCP server at %s", settings.MCP_URL)
+                logging.info("Connecting to MCP server at %s", settings.MCP_URL)
 
                 headers={}
                 if user_token:
@@ -210,8 +210,7 @@ class ResearchExecutor(AgentExecutor):
                     toolkit,)
 
         except Exception as e:
-            traceback_string = traceback.format_exc()
-            logger.error(repr(traceback_string))
+            traceback.print_exc()
             await event_emitter.emit_event(f"Exception encountered: {str(e)}", True)
 
     async def cancel(self, context: RequestContext, event_queue: EventQueue) -> None:

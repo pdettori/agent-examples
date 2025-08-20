@@ -8,11 +8,11 @@ from typing import Callable, List, Any
 from autogen.mcp.mcp_client import Toolkit
 from slack_researcher.event import Event
 from slack_researcher.agents import Agents
-from slack_researcher.config import Settings
+from slack_researcher.config import Settings, settings
 from slack_researcher.prompts import STEP_CRITIC_PROMPT
 
 logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.DEBUG, stream=sys.stdout, format='%(levelname)s: %(message)s')
+logging.basicConfig(level=settings.LOG_LEVEL, stream=sys.stdout, format='%(levelname)s: %(message)s')
 
 class PlanExecutionError(Exception):
     pass
@@ -43,7 +43,7 @@ class RagAgent:
         self.eventer = eventer
         self.config = config
         self.agents = Agents(
-            self.config, assistant_tools=assistant_tools, mcp_toolkit=mcp_toolkit
+            assistant_tools=assistant_tools, mcp_toolkit=mcp_toolkit
         )
         self.logger = logger or logging.getLogger(__name__)
         self.context = PlanContext()

@@ -5,7 +5,7 @@ from typing import Callable
 from autogen import coding, ConversableAgent, register_function
 from autogen.mcp.mcp_client import Toolkit
 
-from slack_researcher.config import Settings
+from slack_researcher.config import Settings, settings
 from slack_researcher.llm import LLMConfig
 from slack_researcher.prompts import (
     ASSISTANT_PROMPT,
@@ -15,7 +15,7 @@ from slack_researcher.prompts import (
 )
 
 logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.DEBUG, stream=sys.stdout, format='%(levelname)s: %(message)s')
+logging.basicConfig(level=settings.LOG_LEVEL, stream=sys.stdout, format='%(levelname)s: %(message)s')
 
 
 class Agents:

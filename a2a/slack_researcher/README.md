@@ -29,3 +29,4 @@ When deploying in the Kagenti UI - You will need to attach 3 environments to the
 | MAX_PLAN_STEPS | The maximum number of plan steps | Yes | `6` | 
 | MCP_URL | Endpoint where the Slack MCP server can be found | No |  "" | 
 | SERVICE_PORT | Port on which the service will run | Yes | `8000` |
+| LOG_LEVEL | Application log level | No | DEBUG |
