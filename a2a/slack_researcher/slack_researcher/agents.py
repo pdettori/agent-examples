@@ -95,7 +95,7 @@ class Agents:
             and msg["content"] is not None
             and (
                 "##ANSWER##" in msg["content"]
-                or "## Answser" in msg["content"]
+                or "## Answer" in msg["content"]
                 or "##TERMINATE##" in msg["content"]
                 or ("tool_calls" not in msg and msg["content"] == "")
             ),

@@ -20,10 +20,10 @@ class PlanExecutionError(Exception):
 
 @dataclass
 class PlanContext:
+    goal: str = ""
     step_index: int = 0
     plan_dict: dict = field(default_factory=dict)
     latest_content: str = ""
-    image_descriptions: List[str] = field(default_factory=list)
     answer_output: List[Any] = field(default_factory=list)
     steps_taken: List[str] = field(default_factory=list)
     last_step: str = ""
@@ -50,10 +50,10 @@ class RagAgent:
 
     async def run_workflow(self, body: list[dict]):
         # Parse instructions from user
-        plan_instruction = self._extract_user_input(body)
+        self.context.goal = self._extract_user_input(body)
 
         # Create an initial plan with the instructions
-        self.context.plan_dict = await self._generate_plan(plan_instruction)
+        self.context.plan_dict = await self._generate_plan(self.context.goal)
 
         # Plan should be a list. If not, return back to user
         if isinstance(self.context.plan_dict, str):
@@ -131,8 +131,7 @@ class RagAgent:
 
         # Now check if we met our goal yet
         goal_message = {
-            "Goal": self.context.latest_content,
-            "Media Description": self.context.image_descriptions,
+            "Goal": self.context.goal,
             "Plan": self.context.plan_dict,
             "Information Gathered": self.context.answer_output,
         }
@@ -149,7 +148,6 @@ class RagAgent:
         # We did not meet our goal, so obtain the next instruction
         message = {
             "Goal": self.context.latest_content,
-            "Media Description": self.context.image_descriptions,
             "Plan": str(self.context.plan_dict),
             "Last Step": reflection_message,
             "Last Step Output": str(self.context.last_output),
@@ -182,7 +180,6 @@ class RagAgent:
         await self.eventer.emit_event(message="Summing up findings...")
         final_prompt = (
             f"Answer the user's query: {self.context.latest_content}\n\n"
-            f"Images: {' '.join(self.context.image_descriptions)}\n"
             f"Use the following information only: {self.context.answer_output}"
         )
         final_output = await self.agents.user_proxy.a_initiate_chat(
