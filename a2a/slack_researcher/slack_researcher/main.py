@@ -12,7 +12,7 @@ from slack_researcher.config import Settings
 from slack_researcher.prompts import STEP_CRITIC_PROMPT
 
 logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO, stream=sys.stdout, format='%(levelname)s: %(message)s')
+logging.basicConfig(level=logging.DEBUG, stream=sys.stdout, format='%(levelname)s: %(message)s')
 
 class PlanExecutionError(Exception):
     pass

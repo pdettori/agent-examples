@@ -28,7 +28,7 @@ from slack_researcher.event import Event
 from slack_researcher.main import RagAgent
 
 logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO, stream=sys.stdout, format='%(levelname)s: %(message)s')
+logging.basicConfig(level=logging.DEBUG, stream=sys.stdout, format='%(levelname)s: %(message)s')
 
 class BearerAuthBackend(AuthenticationBackend):
     """ Very temporary demo to grab auth token and print it"""
