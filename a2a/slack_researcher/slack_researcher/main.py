@@ -179,7 +179,7 @@ class RagAgent:
     async def _summarize_results(self):
         await self.eventer.emit_event(message="Summing up findings...")
         final_prompt = (
-            f"Answer the user's query: {self.context.latest_content}\n\n"
+            f"Answer the user's query: {self.context.goal}\n\n"
             f"Use the following information only: {self.context.answer_output}"
         )
         final_output = await self.agents.user_proxy.a_initiate_chat(
