@@ -19,7 +19,7 @@ except Exception as e:
     print(f"An unexpected error occurred during Slack client initialization: {e}")
     slack_client = None
 
-mcp = FastMCP("Slack", port=8000,
+mcp = FastMCP("Slack", host="0.0.0.0", port=8000,
               token_verifier=get_token_verifier(),
               auth=get_auth(),
         )

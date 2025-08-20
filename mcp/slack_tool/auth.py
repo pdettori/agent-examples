@@ -30,6 +30,6 @@ def get_auth():
     else:
         return AuthSettings(
                 issuer_url=AnyHttpUrl(issuer),  # Authorization Server URL
-                resource_server_url=AnyHttpUrl("http://localhost:8000"),  # TODO This server's URL
+                resource_server_url=AnyHttpUrl("http://0.0.0.0:8000"),  # TODO This server's URL
                 required_scopes=[],
               )

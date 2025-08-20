@@ -2,7 +2,7 @@ import os
 import requests
 from mcp.server.fastmcp import FastMCP
 
-mcp = FastMCP("Weather", port=8000)
+mcp = FastMCP("Weather", host="0.0.0.0", port=8000)
 
 @mcp.tool()
 def get_weather(city: str) -> str:
