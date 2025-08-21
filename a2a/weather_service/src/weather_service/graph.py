@@ -4,7 +4,7 @@ from langchain_core.messages import SystemMessage,  AIMessage
 from langgraph.prebuilt import tools_condition, ToolNode
 from langchain_openai import ChatOpenAI
 import os
-from acp_weather_service.configuration import Configuration
+from weather_service.configuration import Configuration
 
 config = Configuration()
 
