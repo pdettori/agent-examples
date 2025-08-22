@@ -16,8 +16,8 @@ from a2a.types import (
 
 PUBLIC_AGENT_CARD_PATH = '/.well-known/agent.json'
 EXTENDED_AGENT_CARD_PATH = '/agent/authenticatedExtendedCard'
-USER_INPUT = 'how much is 10 USD in INR?'
-#USER_INPUT = 'My name is John Doe, email: john@example.com, phone: (555) 123-4567'
+#USER_INPUT = 'how much is 10 USD in INR?'
+USER_INPUT = 'My name is John Doe, email: john@example.com, phone: (555) 123-4567'
 
 
 async def main() -> None:
@@ -27,7 +27,8 @@ async def main() -> None:
 
     # --8<-- [start:A2ACardResolver]
 
-    base_url = 'http://localhost:9000'
+    #base_url = 'http://localhost:9000'
+    base_url = "http://a2a-contact-extractor.localtest.me:8080"
 
     async with httpx.AsyncClient() as httpx_client:
         # Initialize A2ACardResolver
@@ -109,7 +110,8 @@ async def main() -> None:
 
         # --8<-- [start:send_message]
         client = A2AClient(
-            httpx_client=httpx_client, agent_card=final_agent_card_to_use
+            #httpx_client=httpx_client, agent_card=final_agent_card_to_use
+            httpx_client=httpx_client,url=base_url
         )
         logger.info('A2AClient initialized.')
 
@@ -122,12 +124,12 @@ async def main() -> None:
                 'messageId': uuid4().hex,
             },
         }
-        request = SendMessageRequest(
-            id=str(uuid4()), params=MessageSendParams(**send_message_payload)
-        )
+        # request = SendMessageRequest(
+        #     id=str(uuid4()), params=MessageSendParams(**send_message_payload)
+        # )
 
-        response = await client.send_message(request)
-        print(response.model_dump(mode='json', exclude_none=True))
+        # response = await client.send_message(request)
+        # print(response.model_dump(mode='json', exclude_none=True))
         # --8<-- [end:send_message]
 
         # --8<-- [start:send_message_streaming]
