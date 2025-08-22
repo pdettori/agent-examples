@@ -138,7 +138,7 @@ class WeatherExecutor(AgentExecutor):
         event_emitter = A2AEvent(task_updater)
 
         # Parse Messages
-        messages = [context.get_user_input()]
+        messages = [HumanMessage(content=context.get_user_input())]
         input = {"messages": messages}
         logger.info(f'Processing messages: {input}')
 
@@ -150,7 +150,7 @@ class WeatherExecutor(AgentExecutor):
                 token = get_token()
                 logger.info(f'received token: {token}')
         except Exception as e:
-            event_emitter.emit_event(str(e), failed=True)
+            await event_emitter.emit_event(str(e), failed=True)
             raise Exception(message=str(e))
 
         try:
@@ -166,12 +166,12 @@ class WeatherExecutor(AgentExecutor):
                 logger.info(f'Successfully connected to MCP server. Available tools: {[tool.name for tool in tools]}')
             except Exception as tool_error:
                 logger.error(f'Failed to connect to MCP server: {tool_error}')
-                event_emitter.emit_event("Error: Cannot connect to MCP weather service at {os.getenv('MCP_URL', 'http://localhost:8000/sse')}. Please ensure the weather MCP server is running. Error: {tool_error}", failed=True)
+                await event_emitter.emit_event("Error: Cannot connect to MCP weather service at {os.getenv('MCP_URL', 'http://localhost:8000/sse')}. Please ensure the weather MCP server is running. Error: {tool_error}", failed=True)
                 return
                 
             graph = await get_graph(mcpclient)
             async for event in graph.astream(input, stream_mode="updates"):
-                event_emitter.emit_event(
+                await event_emitter.emit_event(
                     "\n".join(
                         f"🚶‍♂️{key}: {str(value)[:100] + '...' if len(str(value)) > 100 else str(value)}"
                         for key, value in event.items()
@@ -181,10 +181,10 @@ class WeatherExecutor(AgentExecutor):
                 output = event
                 logger.info(f'event: {event}')
             output =  output.get("assistant", {}).get("final_answer")
-            event_emitter.emit_event(str(output), final=True)
+            await event_emitter.emit_event(str(output), final=True)
         except Exception as e:
             logger.error(f'Graph execution error: {e}')
-            event_emitter.emit_event(f"Error: Failed to process weather request. {str(e)}", failed=True)
+            await event_emitter.emit_event(f"Error: Failed to process weather request. {str(e)}", failed=True)
             raise Exception(str(e))
 
     async def cancel(self, context: RequestContext, event_queue: EventQueue) -> None:
