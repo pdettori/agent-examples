@@ -2,7 +2,6 @@ import logging
 import os
 import uvicorn
 from textwrap import dedent
-from typing import AsyncIterator
 
 from a2a.server.agent_execution import AgentExecutor, RequestContext
 from a2a.server.apps import A2AStarletteApplication
@@ -139,7 +138,7 @@ class WeatherExecutor(AgentExecutor):
         event_emitter = A2AEvent(task_updater)
 
         # Parse Messages
-        messages = [HumanMessage(content=input[-1].parts[-1].content)]
+        messages = [context.get_user_input()]
         input = {"messages": messages}
         logger.info(f'Processing messages: {input}')
 
