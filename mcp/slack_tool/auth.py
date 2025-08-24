@@ -4,6 +4,10 @@ from pydantic import AnyHttpUrl
 from mcp.server.auth.settings import AuthSettings
 from mcp.server.auth.provider import AccessToken, TokenVerifier
 
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.DEBUG, stream=sys.stdout, format='%(levelname)s: %(message)s')
+
+
 class SimpleTokenVerifier(TokenVerifier):
     """Simple token verifier for demonstration."""
     def __init__(self, introspection_endpoint = None, client_id = None):

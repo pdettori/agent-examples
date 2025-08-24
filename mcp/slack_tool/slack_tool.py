@@ -1,9 +1,13 @@
 import os
+import logging
 from typing import List, Dict, Any
 from mcp.server.fastmcp import FastMCP
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
 from auth import get_token_verifier, get_auth
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.DEBUG, stream=sys.stdout, format='%(levelname)s: %(message)s')
 
 # setup slack client
 SLACK_BOT_TOKEN = os.getenv("SLACK_BOT_TOKEN", "YOUR_SLACK_BOT_TOKEN")
