@@ -28,7 +28,7 @@ class SimpleTokenVerifier(TokenVerifier):
             verify=False,
         ) as client:
             try:
-                response = await client.post(
+                response = client.post(
                     self.introspection_endpoint,
                     data={"token": token},
                     headers={"Content-Type": "application/x-www-form-urlencoded"},
