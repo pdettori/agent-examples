@@ -28,7 +28,7 @@ class SimpleTokenVerifier(TokenVerifier):
     def _verify_token(self, token: str) -> AccessToken | None:
         timeout = httpx.Timeout(10.0, connect=5.0)
         limits = httpx.Limits(max_connections=10, max_keepalive_connections=5)
-        with httpx.AsyncClient (
+        with httpx.Client (
             timeout=timeout,
             limits=limits,
             verify=False,
