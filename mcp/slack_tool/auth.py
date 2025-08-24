@@ -12,9 +12,10 @@ logging.basicConfig(level=logging.DEBUG, stream=sys.stdout, format='%(levelname)
 
 class SimpleTokenVerifier(TokenVerifier):
     """Simple token verifier for demonstration."""
-    def __init__(self, introspection_endpoint = None, client_id = None):
+    def __init__(self, introspection_endpoint = None, client_id = None, client_secret = None):
         self.introspection_endpoint = introspection_endpoint
         self.client_id = client_id
+        self.client_secret = client_secret
 
     def _dummy_token(self, token: str) -> AccessToken | None:
         return AccessToken(
@@ -36,7 +37,11 @@ class SimpleTokenVerifier(TokenVerifier):
             try:
                 response = client.post(
                     self.introspection_endpoint,
-                    data={"token": token},
+                    data={
+                        "token": token,
+                        "client_id": self.client_id,
+                        "client_secret": self.client_secret,
+                    },
                     headers={"Content-Type": "application/x-www-form-urlencoded"},
                 )
                 logger.debug(f"Response to token introspection: {response}")
@@ -79,10 +84,13 @@ class SimpleTokenVerifier(TokenVerifier):
 def get_token_verifier():
     introspection_endpoint = os.getenv("INTROSPECTION_ENDPOINT")
     client_id = os.getenv("CLIENT_NAME")
+    client_secret = os.getenv("CLIENT_SECRET")
     if introspection_endpoint is None:
         return None
     else:
-        return SimpleTokenVerifier(introspection_endpoint=introspection_endpoint, client_id=client_id)
+        return SimpleTokenVerifier(introspection_endpoint=introspection_endpoint, 
+                                   client_id=client_id,
+                                   client_secret=client_secret)
 
 def get_auth():
     issuer = os.getenv("ISSUER")
