@@ -33,6 +33,7 @@ class SimpleTokenVerifier(TokenVerifier):
                     data={"token": token},
                     headers={"Content-Type": "application/x-www-form-urlencoded"},
                 )
+                logger.debug(f"Response to token introspection: {response}")
 
                 if response.status_code != 200:
                     logger.debug(f"Token introspection returned status {response.status_code}")
