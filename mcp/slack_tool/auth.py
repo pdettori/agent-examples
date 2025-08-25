@@ -15,22 +15,24 @@ class SimpleTokenVerifier(TokenVerifier):
     def __init__(self, introspection_endpoint = None, 
                  client_id = None, 
                  client_secret = None,
-                 validate_resource = False):
+                 expected_audience = None):
         self.introspection_endpoint = introspection_endpoint
         self.client_id = client_id
         self.client_secret = client_secret
-        self.validate_resource = validate_resource
+        self.expected_audience = expected_audience
 
     def _validate_resource(self, data) -> bool:
         # check aud claim in data
-        if client_id is None: 
-            logger.warning(f"No CLIENT_ID env var not set - failing resource validation")
+        if self.expected_audience is None:
+            logger.warning(f"No AUDIENCE env var set - failing resource validation")
             return False
-        if "aud" in data:
+        if not "aud" in data:
+            logger.error(f"No aud claim in token - failing resource validation")
+            return False
+        else:
             # needs client id
             audiences = data["aud"]
-            return client_id in audiences
-        return False
+            return self.expected_audience in audiences
 
     def _dummy_token(self, token: str) -> AccessToken | None:
         return AccessToken(
@@ -71,13 +73,14 @@ class SimpleTokenVerifier(TokenVerifier):
                     return None
 
                 # RFC 8707 resource validation (only when --oauth-strict is set)
-                if self.validate_resource and not self._validate_resource(data):
-                    logger.warning(f"Token resource validation failed. Expected: {self.resource_url}")
-                    return None
+                if self.expected_audience is None:
+                    logger.warning(f"No expected audience set. Skipping token resource validation")
+                    if not self._validate_resource(data):
+                        logger.warning(f"Token resource validation failed. Expected: {self.expected_audience}")
+                        return None
 
                 access_token = AccessToken(
                     token=token,
-                    client_id=data.get("client_id", "unknown"),
                     scopes=data.get("scope", "").split() if data.get("scope") else [],
                     expires_at=data.get("exp"),
                     resource=data.get("aud"),  # Include resource in token
@@ -85,7 +88,7 @@ class SimpleTokenVerifier(TokenVerifier):
                 logger.debug(str(access_token))
                 return access_token
             except Exception as e:
-                logger.warning(f"Token introspection failed: {e}")
+                logger.error(f"Token introspection failed: {e}")
                 return None
 
 
@@ -101,16 +104,14 @@ def get_token_verifier():
     introspection_endpoint = os.getenv("INTROSPECTION_ENDPOINT")
     client_id = os.getenv("CLIENT_NAME")
     client_secret = os.getenv("CLIENT_SECRET")
-    validate_resource = False
-    if not client_id is None:
-        validate_resource = True
+    expected_audience = os.getenv("AUDIENCE")
     if introspection_endpoint is None:
         return None
     else:
         return SimpleTokenVerifier(introspection_endpoint=introspection_endpoint, 
                                    client_id=client_id,
                                    client_secret=client_secret,
-                                   validate_resource=validate_resource)
+                                   expected_audience=expected_audience)
 
 def get_auth():
     issuer = os.getenv("ISSUER")
