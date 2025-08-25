@@ -7,11 +7,14 @@ This is a simple Slack MCP Server with two tools:
 
 You can configure the server with the following environment variables:
 
-| Variable name     | Required? | Default                | Description |
-| ----------------- | --------- | ---------------------- | ----------------------------- |
-| `SLACK_BOT_TOKEN` | Yes       | `YOUR_SLACK_BOT_TOKEN` | Access token for the Slack server |
-| `MCP_TRANSPORT`   | No        | `streamable-http`      | Passed into mcp.run to determine mcp transport |
-| `ISSUER`          | No        | - | If populated, will attempt to extract bearer token, fail otherwise. Must be URI format |
+| Variable name            | Required? | Default                | Description |
+| ------------------------ | --------- | ---------------------- | ----------------------------- |
+| `SLACK_BOT_TOKEN`        | Yes       | `YOUR_SLACK_BOT_TOKEN` | Access token for the Slack server |
+| `LOG_LEVEL`              | No        | `INFO`                 | Application log level |
+| `MCP_TRANSPORT`          | No        | `streamable-http`      | Passed into mcp.run to determine mcp transport |
+| `ISSUER`                 | No        | - | If populated, will publish that it is OAuth-secured by this issuer (but no actual verification). Must be URI format |
+| `INTROSPECTION_ENDPOINT` | No        | - | If populated, will extract access tokens from requests and introspect them here |
+| `AUDIENCE `              | No.       | - | If populated with `INTROSPECTION_ENDPOINT` will perform audience validation |
 
 You can run this locally with `uv run slack_tool.py` so long as the `SLACK_BOT_TOKEN` is set. 
 
