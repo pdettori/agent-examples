@@ -12,10 +12,25 @@ logging.basicConfig(level=logging.DEBUG, stream=sys.stdout, format='%(levelname)
 
 class SimpleTokenVerifier(TokenVerifier):
     """Simple token verifier for demonstration."""
-    def __init__(self, introspection_endpoint = None, client_id = None, client_secret = None):
+    def __init__(self, introspection_endpoint = None, 
+                 client_id = None, 
+                 client_secret = None,
+                 validate_resource = False):
         self.introspection_endpoint = introspection_endpoint
         self.client_id = client_id
         self.client_secret = client_secret
+        self.validate_resource = validate_resource
+
+    def _validate_resource(self, data) -> bool:
+        # check aud claim in data
+        if client_id is None: 
+            logger.warning(f"No CLIENT_ID env var not set - failing resource validation")
+            return False
+        if "aud" in data:
+            # needs client id
+            audiences = data["aud"]
+            return client_id in audiences
+        return False
 
     def _dummy_token(self, token: str) -> AccessToken | None:
         return AccessToken(
@@ -86,12 +101,16 @@ def get_token_verifier():
     introspection_endpoint = os.getenv("INTROSPECTION_ENDPOINT")
     client_id = os.getenv("CLIENT_NAME")
     client_secret = os.getenv("CLIENT_SECRET")
+    validate_resource = False
+    if not client_id is None:
+        validate_resource = True
     if introspection_endpoint is None:
         return None
     else:
         return SimpleTokenVerifier(introspection_endpoint=introspection_endpoint, 
                                    client_id=client_id,
-                                   client_secret=client_secret)
+                                   client_secret=client_secret,
+                                   validate_resource=validate_resource)
 
 def get_auth():
     issuer = os.getenv("ISSUER")
