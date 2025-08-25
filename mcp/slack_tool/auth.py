@@ -72,7 +72,7 @@ class SimpleTokenVerifier(TokenVerifier):
                 if not data.get("active", False):
                     return None
 
-                # RFC 8707 resource validation (only when --oauth-strict is set)
+                # RFC 8707 resource validation
                 if self.expected_audience is None:
                     logger.warning(f"No expected audience set. Skipping token resource validation")
                     if not self._validate_resource(data):
@@ -81,9 +81,10 @@ class SimpleTokenVerifier(TokenVerifier):
 
                 access_token = AccessToken(
                     token=token,
+                    client_id=data.get("client_id", "unknown"),
                     scopes=data.get("scope", "").split() if data.get("scope") else [],
                     expires_at=data.get("exp"),
-                    resource=data.get("aud"),  # Include resource in token
+                    resource=(" ".join(data.get("aud"))),  # Include resource in token
                 )
                 logger.debug(str(access_token))
                 return access_token
