@@ -47,10 +47,11 @@ class SimpleTokenVerifier(TokenVerifier):
                 logger.debug(f"Response to token introspection: {response}")
 
                 if response.status_code != 200:
-                    logger.debug(f"Token introspection returned status {response.status_code}")
+                    logger.error(f"Token introspection returned status {response.status_code}")
                     return None
 
                 data = response.json()
+                logger.debug(f"data: {data}")
                 if not data.get("active", False):
                     return None
 
