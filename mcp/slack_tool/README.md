@@ -10,7 +10,7 @@ You can configure the server with the following environment variables:
 | Variable name            | Required? | Default                | Description |
 | ------------------------ | --------- | ---------------------- | ----------------------------- |
 | `SLACK_BOT_TOKEN`        | Yes       | `YOUR_SLACK_BOT_TOKEN` | Access token for the Slack server |
-| `LOG_LEVEL`              | No        | `INFO`                 | Application log level |
+| `LOG_LEVEL`              | No        | `DEBUG`                | Application log level |
 | `MCP_TRANSPORT`          | No        | `streamable-http`      | Passed into mcp.run to determine mcp transport |
 | `ISSUER`                 | No        | - | If populated, will publish that it is OAuth-secured by this issuer (but no actual verification). Must be URI format |
 | `INTROSPECTION_ENDPOINT` | No        | - | If populated, will extract access tokens from requests and introspect them here |

@@ -8,7 +8,7 @@ from slack_sdk.errors import SlackApiError
 from auth import get_token_verifier, get_auth
 
 logger = logging.getLogger(__name__)
-logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO"), stream=sys.stdout, format='%(levelname)s: %(message)s')
+logging.basicConfig(level=os.getenv("LOG_LEVEL", "DEBUG"), stream=sys.stdout, format='%(levelname)s: %(message)s')
 
 # setup slack client
 SLACK_BOT_TOKEN = os.getenv("SLACK_BOT_TOKEN", "YOUR_SLACK_BOT_TOKEN")
