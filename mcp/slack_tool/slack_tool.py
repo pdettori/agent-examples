@@ -18,7 +18,7 @@ slack_client = None
 
 def slack_client_from_bot_token(bot_token):
     try: 
-        slack_client = WebClient(token=SLACK_BOT_TOKEN)
+        slack_client = WebClient(token=bot_token)
         auth_test = slack_client.auth_test()
         logger.info(f"Successfully authenticated as bot '{auth_test['user']}' in workspace '{auth_test['team']}'.")
         return slack_client
@@ -40,6 +40,8 @@ def get_slack_client(access_token = None):
         return None
     access_token_scopes = access_token.scopes
     logger.debug(f"Received scopes: {access_token_scopes}")
+    is_admin = 'slack-admin' in access_token_scopes
+    logger.debug(f"{is_admin}")
     if 'slack-admin' in access_token_scopes:
         return slack_client_from_bot_token(ADMIN_SLACK_BOT_TOKEN)
     return slack_client_from_bot_token(SLACK_BOT_TOKEN)
