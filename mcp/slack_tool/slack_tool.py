@@ -62,7 +62,8 @@ def get_channel_history(channel_id: str, limit: int = 20) -> List:
     try:
         # Call the Slack API to list conversations the bot is part of.
         response = slack_client.conversations_history(
-            channel=channel_id
+            channel=channel_id,
+            limit=limit
         )
         return response.get("messages",)
     except SlackApiError as e:
