@@ -40,6 +40,8 @@ def get_slack_client(access_token = None):
         return None
     access_token_scopes = access_token.scopes
     logger.debug(f"Received scopes: {access_token_scopes}")
+    if 'slack-admin' in access_token_scopes:
+        return slack_client_from_bot_token(ADMIN_SLACK_BOT_TOKEN)
     return slack_client_from_bot_token(SLACK_BOT_TOKEN)
 
 
