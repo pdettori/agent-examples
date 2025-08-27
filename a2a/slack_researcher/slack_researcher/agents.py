@@ -31,6 +31,9 @@ class Agents:
             config = Settings()
 
         llm_config = LLMConfig(config)
+        print("***********")
+        print(llm_config)
+        print(llm_config.planner_llm_config)
 
         # Generic LLM completion, used for servicing Open WebUI originated requests
         self.generic_assistant = ConversableAgent(
@@ -73,7 +76,7 @@ class Agents:
             name="ReflectionAssistant",
             system_message=REFLECTION_ASSISTANT_PROMPT,
             code_execution_config=False,
-            llm_config=llm_config.openai_llm_config,
+            llm_config=llm_config.reflection_llm_config,
             human_input_mode="NEVER",
         )
 

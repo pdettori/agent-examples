@@ -8,8 +8,9 @@ from typing import Callable, List, Any
 from autogen.mcp.mcp_client import Toolkit
 from slack_researcher.event import Event
 from slack_researcher.agents import Agents
-from slack_researcher.config import Settings, settings
+from slack_researcher.config import Settings, settings  
 from slack_researcher.prompts import STEP_CRITIC_PROMPT
+from slack_researcher.types import Reflection
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=settings.LOG_LEVEL, stream=sys.stdout, format='%(levelname)s: %(message)s')
@@ -28,6 +29,7 @@ class PlanContext:
     steps_taken: List[str] = field(default_factory=list)
     last_step: str = ""
     last_output: Any = ""
+    failure_reason: str = ""
 
 
 class RagAgent:
@@ -92,23 +94,28 @@ class RagAgent:
 
     async def _execute_plan(self):
         for self.context.step_index in range(self.config.MAX_PLAN_STEPS):
-            instruction = await self._determine_next_instruction()
+            instruction_dict = await self._determine_next_instruction()
 
-            if not instruction or "##TERMINATE##" in instruction:
+            if instruction_dict["decision"] == "TERMINATE":
+                if instruction_dict["message"]:
+                    self.context.failure_reason = instruction_dict["message"]
                 break
 
-            self.context.last_output = await self._execute_instruction(instruction)
-            self.context.last_step = instruction
+            self.context.last_step = instruction_dict["message"]
+            self.context.last_output = await self._execute_instruction(instruction_dict["message"])
+            
 
         return await self._summarize_results()
 
     async def _determine_next_instruction(self):
+        # if this is the first step, just take what the planner already determined the first step to be
         if self.context.step_index == 0:
-            return self.context.plan_dict["steps"][0]
+            instructions = Reflection(decision="CONTINUE", message=self.context.plan_dict["steps"][0])
+            return instructions.__dict__
 
         await self.eventer.emit_event(message="Planning the next step...")
 
-        # First check if the previous step was successful
+        # First call the step critic to check if the previous step was successful
         output = await self.agents.user_proxy.a_initiate_chat(
             recipient=self.agents.step_critic,
             max_turns=1,
@@ -119,17 +126,17 @@ class RagAgent:
             ),
         )
         was_job_accomplished = output.chat_history[-1]["content"]
-        reflection_message = self.context.last_step
 
         # Only store the output of the last step to the context if it was successful
-        # Throw away output of unsucessful steps
+        # Throw away output of unsuccessful steps
         if "##NO##" in was_job_accomplished:
             reflection_message = f"The previous step was {self.context.last_step} but was not accomplished: {was_job_accomplished}."
         else:
+            reflection_message = self.context.last_step
             self.context.answer_output.append(self.context.last_output)
             self.context.steps_taken.append(self.context.last_step)
 
-        # Now check if we met our goal yet
+        # Now call the goal critic to check if we met our goal yet
         goal_message = {
             "Goal": self.context.goal,
             "Plan": self.context.plan_dict,
@@ -143,7 +150,7 @@ class RagAgent:
 
         if "##NOT YET##" not in output.chat_history[-1]["content"]:
             # We met our goal, so end the loop
-            return None
+            return Reflection(decision="TERMINATE", message="").__dict__
 
         # We did not meet our goal, so obtain the next instruction
         message = {
@@ -153,12 +160,13 @@ class RagAgent:
             "Last Step Output": str(self.context.last_output),
             "Steps Taken": str(self.context.steps_taken),
         }
-        output = await self.agents.user_proxy.a_initiate_chat(
+        response = await self.agents.user_proxy.a_initiate_chat(
             recipient=self.agents.reflection_assistant,
             max_turns=1,
             message=f"(```{str(message)}```",
         )
-        return output.chat_history[-1]["content"]
+        print(response)
+        return json.loads(response.chat_history[-1]["content"])
 
     async def _execute_instruction(self, instruction):
         await self.eventer.emit_event(message="Executing step: " + instruction)
@@ -178,10 +186,17 @@ class RagAgent:
 
     async def _summarize_results(self):
         await self.eventer.emit_event(message="Summing up findings...")
-        final_prompt = (
-            f"Answer the user's query: {self.context.goal}\n\n"
-            f"Use the following information only: {self.context.answer_output}"
-        )
+        if self.context.failure_reason:
+            final_prompt = (
+                f"A user sent an instruction/query: {self.context.goal}\n\n"
+                f"However it was unable to be fully answered/met because of the following reason: {self.context.failure_reason}"
+                f"Attempt to answer the query at least partially, if possible, while giving a detailed explanation as to why you cannot fulfill their request. Use the following information only to formulate your reply: {self.context.answer_output}"
+            )
+        else:
+            final_prompt = (
+                f"Directly answer the user's query: {self.context.goal}\n\n"
+                f"If you are unable to fully answer the user's query or instruction, give a detailed explanation as to why. Use the following information only to formulate your reply: {self.context.answer_output}"
+            )
         final_output = await self.agents.user_proxy.a_initiate_chat(
             message=final_prompt, max_turns=1, recipient=self.agents.report_generator
         )

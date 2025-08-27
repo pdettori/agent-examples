@@ -55,16 +55,16 @@ def get_agent_card(host: str, port: int):
     skill = AgentSkill(
         id="slack_researcher",
         name="Slack research agent",
-        description="Answer queries by searching thorugh a given slack server",
+        description="Answer queries by searching through a given slack server",
         tags=["research", "slack", "search", "report"],
         examples=[
             "Find me the most popular channels for discussing AI agents",
-            "Summarize what's been happening in the general channel lateley",
+            "Summarize what's been happening in the general channel lately",
         ],
     )
     return AgentCard(
         name="Web Research Agent",
-        description="Answer queries by searching thorugh a given slack server",
+        description="Answer queries by searching through a given slack server",
         url=f"http://{host}:{port}/",
         version="1.0.0",
         default_input_modes=["text"],

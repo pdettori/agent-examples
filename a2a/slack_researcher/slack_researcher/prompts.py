@@ -5,14 +5,16 @@ PLANNER_MESSAGE = """You are a task planner. You will be given some information 
     You will not execute the steps yourself, but provide the steps to a helper who will execute them. Make sure each step consists of a single operation, not a series of operations. The helper has the following capabilities:
     {tool_descriptions}
     The plan may have as little or as many steps as is necessary to accomplish the given task.
+    Be sure to format the plan as a JSON list, with each step of the plan as a distinct item in the list.
 
-    You may use any of the capabilties that the helper has, but you do not need to use all of them if they are not required to complete the task.
+    You may use any of the capabilities that the helper has, but you do not need to use all of them if they are not required to complete the task.
     For example, if the task requires knowledge that is specific to the user, you may choose to include a step that searches through the user's documents. However, if the task only requires information that is available on the internet, you may choose to include a step that searches the internet and omit document searching.
     """
 
 ASSISTANT_PROMPT = """
-    Make sure to provide a thorough answer that directly addresses the message you received.
+    Provide an answer that directly addresses the message you received. You may use tools to accomplish the ask.
     If the task is able to be accomplished without using tools, then do not make any tool calls.
+    When using tools to answer the message, ensure you ground your reply in the output from the tool only.
     
     # Tool Use
     You have access to the following tools. Only use these available tools and do not attempt to use anything not listed - this will cause an error.
@@ -43,7 +45,6 @@ GOAL_JUDGE_PROMPT = """You are a judge. Your job is to carefully inspect whether
     ```
     {
         "Goal": "The ultimate goal/instruction to be fully fulfilled, along with any accompanying images that may provide further context.",
-        "Media Description": "If the user provided an image to supplement their instruction, a description of the image's content."
         "Plan": "The plan to achieve the goal, including any sub-goals or tasks that need to be completed.",
         "Information Gathered": "The information collected so far in pursuit of fulfilling the goal."
     }
@@ -55,12 +56,12 @@ GOAL_JUDGE_PROMPT = """You are a judge. Your job is to carefully inspect whether
 - **If even a small part of the goal is unfulfilled, reply with ##NOT YET##.**  
     """
 
-REFLECTION_ASSISTANT_PROMPT = """You are a strategic planner focused on executing sequential steps to achieve a given goal. You will receive data in JSON format containing the current state of the plan and its progress. Your task is to determine the single next step, ensuring it aligns with the overall goal and builds upon the previous steps.
+REFLECTION_ASSISTANT_PROMPT = """You are a strategic planner focused on executing sequential steps to achieve a given goal. You will receive data in JSON format containing the current state of the plan and its progress.
+Your task is to determine the single next step, ensuring it aligns with the overall goal and builds upon the previous steps. The next step can either be a step or an instruction to terminate if you've persistently tried to solve the problem, but were unable to.
 
 JSON Structure:
 {
     "Goal": The original objective from the user,
-    "Media Description": A textual description of any associated image,
     "Plan": An array outlining every planned step,
     "Last Step": The most recent action taken,
     "Last Step Output": The result of the last step, indicating success or failure,
@@ -68,9 +69,10 @@ JSON Structure:
 }
 
 Guidelines:
-1. If the last step output is ##NO##, reassess and refine the instruction to avoid repeating past mistakes. Provide a single, revised instruction for the next step.
-2. If the last step output is ##YES##, proceed to the next logical step in the plan.
-3. Use 'Last Step', 'Last Output', and 'Steps Taken' for context when deciding on the next action.
+1. If the last step output is ##NOT YET##, reassess and refine the instruction to avoid repeating past mistakes. Provide a single, revised instruction for the next step. 
+2. If you determine that no feasible steps are available to achieve the goal, you may indicate that it is time to terminate, accompanied by a specific detailed message explaining why. Only come to this decision after previous attempts have failed, and you are certain that no feasible path to success exists.
+3. If the last step output is ##YES##, proceed to the next logical step in the plan.
+4. Use 'Last Step', 'Last Output', and 'Steps Taken' for context when deciding on the next action.
 
 Restrictions:
 1. Do not attempt to resolve the problem independently; only provide instructions for the subsequent agent's actions.
@@ -78,6 +80,7 @@ Restrictions:
 
 Example of a single instruction:
 - "Analyze the dataset for missing values and report their percentage."
+- "Terminate the workflow because after attempting to use the provided tools, they do not provide sufficient data to accomplish the goal."
     """
 
 STEP_CRITIC_PROMPT = """The previous instruction was {last_step} \nThe following is the output of that instruction.
