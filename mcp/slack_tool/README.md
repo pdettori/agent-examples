@@ -13,8 +13,13 @@ You can configure the server with the following environment variables:
 | `LOG_LEVEL`              | No        | `DEBUG`                | Application log level |
 | `MCP_TRANSPORT`          | No        | `streamable-http`      | Passed into mcp.run to determine mcp transport |
 | `ISSUER`                 | No        | - | If populated, will publish that it is OAuth-secured by this issuer (but no actual verification). Must be URI format |
-| `INTROSPECTION_ENDPOINT` | No        | - | If populated, will extract access tokens from requests and introspect them here |
-| `AUDIENCE `              | No.       | - | If populated with `INTROSPECTION_ENDPOINT` will perform audience validation |
+| `INTROSPECTION_ENDPOINT` | No        | - | If populated with `CLIENT_NAME` and `CLIENT_SECRET`, will introspect access tokens at this endpoint |
+| `CLIENT_NAME`            | No        | - | If populated with `INTROSPECTION_ENDPOINT` and `CLIENT_SECRET`, will introspect access tokens using this as the client id to authenticate |
+| `CLIENT_SECRET`          | No        | - | If populated with `INTROSPECTION_ENDPOINT` and `CLIENT_NAME`, will introspect access tokens using this as the client secret to authenticate |
+| `AUDIENCE `              | No        | - | If populated with `INTROSPECTION_ENDPOINT` will perform audience validation |
+
+Note: all three of `INTROSPECTION_ENDPOINT`, `CLIENT_NAME`, and `CLIENT_SECRET` are required for token validation to occur. `AUDIENCE` enables the additional audience check. 
+
 
 You can run this locally with `uv run slack_tool.py` so long as the `SLACK_BOT_TOKEN` is set. 
 
