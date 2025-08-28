@@ -75,9 +75,9 @@ class SimpleTokenVerifier(TokenVerifier):
                 # RFC 8707 resource validation
                 if self.expected_audience is None:
                     logger.warning(f"No expected audience set. Skipping token resource validation")
-                    if not self._validate_resource(data):
-                        logger.warning(f"Token resource validation failed. Expected: {self.expected_audience}")
-                        return None
+                elif not self._validate_resource(data):
+                    logger.warning(f"Token resource validation failed. Expected: {self.expected_audience}")
+                    return None
 
                 access_token = AccessToken(
                     token=token,
