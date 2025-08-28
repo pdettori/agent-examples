@@ -14,7 +14,6 @@ logging.basicConfig(level=os.getenv("LOG_LEVEL", "DEBUG"), stream=sys.stdout, fo
 # setup slack client
 SLACK_BOT_TOKEN = os.getenv("SLACK_BOT_TOKEN")
 ADMIN_SLACK_BOT_TOKEN = os.getenv("ADMIN_SLACK_BOT_TOKEN")
-slack_client = None
 
 def slack_client_from_bot_token(bot_token):
     try: 
