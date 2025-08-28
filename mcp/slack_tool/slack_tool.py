@@ -39,8 +39,9 @@ def get_slack_client(access_token = None):
         return None
     access_token_scopes = access_token.scopes
     logger.debug(f"Received scopes: {access_token_scopes}")
-    is_admin = 'slack-admin' in access_token_scopes
-    logger.debug(f"{is_admin}")
+    admin_scope = os.getenv("ADMIN_SCOPE_NAME")
+    is_admin = admin_scope in access_token_scopes
+    logger.debug(f"Is admin: {is_admin}")
     if 'slack-admin' in access_token_scopes:
         return slack_client_from_bot_token(ADMIN_SLACK_BOT_TOKEN)
     return slack_client_from_bot_token(SLACK_BOT_TOKEN)
@@ -126,12 +127,13 @@ if __name__ == "__main__":
     else: # two tokens set -> we validate the JWT and connect to slack based on access token scope
         # check if other required Auth variables are set
         introspection_endpoint = os.getenv("INTROSPECTION_ENDPOINT")
-        client_id = os.getenv("CLIENT_NAME")
+        client_id = os.getenv("CLIENT_ID")
         client_secret = os.getenv("CLIENT_SECRET")
         expected_audience = os.getenv("AUDIENCE")
+        admin_scope = os.getenv("ADMIN_SCOPE_NAME")
         issuer = os.getenv("ISSUER")
-        if None in [introspection_endpoint, client_id, client_secret, expected_audience, issuer]:
-            logger.error("Configured ADMIN_SLACK_BOT_TOKEN but not one or more of INTROSPECTION_ENDPOINT, CLIENT_NAME, CLIENT_SECRET, AUDIENCE, ISSUER. ")
+        if None in [introspection_endpoint, client_id, client_secret, expected_audience, issuer, admin_scope]:
+            logger.error("Configured ADMIN_SLACK_BOT_TOKEN but not one or more of INTROSPECTION_ENDPOINT, CLIENT_ID, CLIENT_SECRET, AUDIENCE, ISSUER. ")
         else: 
             logger.info("Configured two slack tokens; finer-grained authz enabled")
             logger.info("Starting Slack MCP Server")

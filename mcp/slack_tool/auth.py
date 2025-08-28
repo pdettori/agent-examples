@@ -103,7 +103,7 @@ class SimpleTokenVerifier(TokenVerifier):
 
 def get_token_verifier():
     introspection_endpoint = os.getenv("INTROSPECTION_ENDPOINT")
-    client_id = os.getenv("CLIENT_NAME")
+    client_id = os.getenv("CLIENT_ID")
     client_secret = os.getenv("CLIENT_SECRET")
     expected_audience = os.getenv("AUDIENCE")
     if introspection_endpoint is None:
