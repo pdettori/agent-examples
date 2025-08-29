@@ -42,7 +42,7 @@ def get_slack_client(access_token = None):
     admin_scope = os.getenv("ADMIN_SCOPE_NAME")
     is_admin = admin_scope in access_token_scopes
     logger.debug(f"Is admin: {is_admin}")
-    if 'slack-admin' in access_token_scopes:
+    if is_admin:
         return slack_client_from_bot_token(ADMIN_SLACK_BOT_TOKEN)
     return slack_client_from_bot_token(SLACK_BOT_TOKEN)
 
