@@ -16,7 +16,7 @@ def get_mcpclient():
     return MultiServerMCPClient({
         "math": {
             "url": os.getenv("MCP_URL", "http://localhost:8000/mcp"),
-            "transport": os.getenv("MCP_TRANSPORT", "streamable-http"),
+            "transport": os.getenv("MCP_TRANSPORT", "streamable_http"),
         }
     })
 
