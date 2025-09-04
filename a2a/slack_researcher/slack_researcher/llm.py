@@ -1,59 +1,37 @@
 from slack_researcher.config import Settings
-from slack_researcher.types import Plan, Reflection
+from slack_researcher.data_types import ChannelList, UserIntent, UserRequirement
 
 
 class LLMConfig:
     def __init__(self, config: Settings):
-        # Used for most agents
-        self.openai_llm_config = {
-            "config_list": [
-            {
-                "model": config.TASK_MODEL_ID,
-                "base_url": config.LLM_API_BASE,
-                "api_type": "openai",
-                "api_key": config.LLM_API_KEY,
-                **(
-                    {"default_headers": config.EXTRA_HEADERS}
-                    if config.EXTRA_HEADERS
-                    else {}
-                ),
-            }
-        ],
-            "temperature": config.MODEL_TEMPERATURE,
+        self._base_config = {
+            "model": config.TASK_MODEL_ID,
+            "base_url": config.LLM_API_BASE,
+            "api_type": "openai",
+            "api_key": config.LLM_API_KEY,
         }
 
-        self.planner_llm_config = {
-            "config_list": [
-            {
-                "model": config.TASK_MODEL_ID,
-                "base_url": config.LLM_API_BASE,
-                "api_type": "openai",
-                "api_key": config.LLM_API_KEY,
-                "response_format": Plan,
-                **(
-                    {"default_headers": config.EXTRA_HEADERS}
-                    if config.EXTRA_HEADERS
-                    else {}
-                ),
-            }
-        ],
-            "temperature": config.MODEL_TEMPERATURE,
-        }
+        self.openai_llm_config = self._create_llm_config(config, None)
+        self.channel_llm_config = self._create_llm_config(config, ChannelList)
+        self.intent_classifier_llm_config = self._create_llm_config(config, UserIntent)
+        self.user_requirement_llm_config = self._create_llm_config(config, UserRequirement)
 
-        self.reflection_llm_config = {
+    def _create_llm_config(self, config, response_format):
+        return {
             "config_list": [
-            {
-                "model": config.TASK_MODEL_ID,
-                "base_url": config.LLM_API_BASE,
-                "api_type": "openai",
-                "api_key": config.LLM_API_KEY,
-                "response_format": Reflection,
-                **(
-                    {"default_headers": config.EXTRA_HEADERS}
-                    if config.EXTRA_HEADERS
-                    else {}
-                ),
-            }
-        ],
+                {
+                    **self._base_config,
+                    **(
+                        {"response_format": response_format}
+                        if response_format
+                        else {}
+                    ),
+                    **(
+                        {"default_headers": config.EXTRA_HEADERS}
+                        if config.EXTRA_HEADERS
+                        else {}
+                    ),
+                }
+            ],
             "temperature": config.MODEL_TEMPERATURE,
         }

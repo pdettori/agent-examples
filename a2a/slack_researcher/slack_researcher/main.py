@@ -1,71 +1,57 @@
-import logging
-import json
 import asyncio
+import json
+import logging
 import sys
-from dataclasses import dataclass, field
-from typing import Callable, List, Any
-
+from typing import Callable
 from autogen.mcp.mcp_client import Toolkit
-from slack_researcher.event import Event
 from slack_researcher.agents import Agents
-from slack_researcher.config import Settings, settings  
-from slack_researcher.prompts import STEP_CRITIC_PROMPT
-from slack_researcher.types import Reflection
+from slack_researcher.config import settings, Settings
+from slack_researcher.data_types import ChannelInfo, ChannelList, UserIntent, UserRequirement
+from slack_researcher.event import Event
+
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=settings.LOG_LEVEL, stream=sys.stdout, format='%(levelname)s: %(message)s')
 
-class PlanExecutionError(Exception):
-    pass
+class SlackAgent:
+    def __init__(self, config: Settings,
+        eventer: Event = None,
+        assistant_tools: dict[str, Callable] = None,
+        mcp_toolkit: Toolkit = None,
+        logger=None,):
 
-
-@dataclass
-class PlanContext:
-    goal: str = ""
-    step_index: int = 0
-    plan_dict: dict = field(default_factory=dict)
-    latest_content: str = ""
-    answer_output: List[Any] = field(default_factory=list)
-    steps_taken: List[str] = field(default_factory=list)
-    last_step: str = ""
-    last_output: Any = ""
-    failure_reason: str = ""
-
-
-class RagAgent:
-
-    def __init__(
-        self,
-        config: Settings,
-        eventer: Event,
-        assistant_tools: dict[str, Callable],
-        mcp_toolkit: Toolkit,
-        logger=None,
-    ):
+        self.agents = Agents(settings, assistant_tools, mcp_toolkit)
         self.eventer = eventer
-        self.config = config
-        self.agents = Agents(
-            assistant_tools=assistant_tools, mcp_toolkit=mcp_toolkit
-        )
         self.logger = logger or logging.getLogger(__name__)
-        self.context = PlanContext()
 
-    async def run_workflow(self, body: list[dict]):
-        # Parse instructions from user
-        self.context.goal = self._extract_user_input(body)
+        # State
+        self.user_intent: UserIntent = None
+        self.requirements: UserRequirement = None
+        self.all_channels: str = ""
+        self.relevant_channels: ChannelList = None
+        self.channel_outputs = []
 
-        # Create an initial plan with the instructions
-        self.context.plan_dict = await self._generate_plan(self.context.goal)
+    async def _send_event(self, message: str, final: bool = False):
+        self.logger.info(message)
+        if self.eventer:
+            await self.eventer.emit_event(message, final)
+        else:
+            self.logger.warning("No event handler registered")
+            
+    async def execute(self, user_query):
+        self.user_query = self.extract_user_input(user_query)
+        await self.classify_intent()
+        await self.list_all_channels()
+        await self.identify_requirements()
+        await self.get_relevant_channels()
 
-        # Plan should be a list. If not, return back to user
-        if isinstance(self.context.plan_dict, str):
-            return self.context.plan_dict
+        if self.user_intent.intent == "LIST_CHANNELS":
+            return await self.summarize_data(str(self.relevant_channels))
 
-        # Execute plan
-        final_answer = await self._execute_plan()
-        return final_answer
+        await self.query_channels()
+        return await self.summarize_data(str(self.channel_outputs))
 
-    def _extract_user_input(self, body):
+    def extract_user_input(self, body):
         content = body[-1]["content"]
         latest_content = ""
 
@@ -79,125 +65,61 @@ class RagAgent:
                     self.logger.warning(f"Ignoring content with type {item['type']}")
 
         return latest_content
+    
+    async def classify_intent(self):
+        prompt = f"Classify the intent of the user as either simply needing to list slack channel information or if their intent is querying the content of slack channels themselves. User query: {self.user_query}"
+        response = await self.agents.user_proxy.a_initiate_chat(message=prompt, recipient=self.agents.intent_classifier, max_turns=1)
+        self.user_intent = UserIntent(**json.loads(response.chat_history[-1]["content"]))
+        self._send_event(f"🧐 Identified user intent: {self.user_intent.intent}")
 
-    async def _generate_plan(self, instruction):
-        await self.eventer.emit_event(message="Creating a plan...")
-        try:
-            response = await self.agents.user_proxy.a_initiate_chat(
-                message=instruction, max_turns=1, recipient=self.agents.planner
-            )
-            print(response)
-            return json.loads(response.chat_history[-1]["content"])
-        except Exception as e:
-            self.logger.exception("Plan generation failed")
-            return f"Unable to assemble a plan. Error: {e}"
+    async def identify_requirements(self):
+        response = await self.agents.user_proxy.a_initiate_chat(message=self.user_query, recipient=self.agents.requirement_identifier, max_turns=1)
+        self.requirements = UserRequirement(**json.loads(response.chat_history[-1]["content"]))
+        self._send_event(f"📇 Identified channel requirements. Channel names: {self.requirements.specific_channel_names}, Channel types: {self.requirements.types_of_channels}")
 
-    async def _execute_plan(self):
-        for self.context.step_index in range(self.config.MAX_PLAN_STEPS):
-            instruction_dict = await self._determine_next_instruction()
-
-            if instruction_dict["decision"] == "TERMINATE":
-                if instruction_dict["message"]:
-                    self.context.failure_reason = instruction_dict["message"]
-                break
-
-            self.context.last_step = instruction_dict["message"]
-            self.context.last_output = await self._execute_instruction(instruction_dict["message"])
-            
-
-        return await self._summarize_results()
-
-    async def _determine_next_instruction(self):
-        # if this is the first step, just take what the planner already determined the first step to be
-        if self.context.step_index == 0:
-            instructions = Reflection(decision="CONTINUE", message=self.context.plan_dict["steps"][0])
-            return instructions.__dict__
-
-        await self.eventer.emit_event(message="Planning the next step...")
-
-        # First call the step critic to check if the previous step was successful
-        output = await self.agents.user_proxy.a_initiate_chat(
-            recipient=self.agents.step_critic,
-            max_turns=1,
-            message=STEP_CRITIC_PROMPT.format(
-                last_step=self.context.last_step,
-                context=self.context.answer_output,
-                last_output=self.context.last_output,
-            ),
-        )
-        was_job_accomplished = output.chat_history[-1]["content"]
-
-        # Only store the output of the last step to the context if it was successful
-        # Throw away output of unsuccessful steps
-        if "##NO##" in was_job_accomplished:
-            reflection_message = f"The previous step was {self.context.last_step} but was not accomplished: {was_job_accomplished}."
+    async def list_all_channels(self):
+        self._send_event("🔎 Fetching all channels")
+        response = await self.agents.user_proxy.a_initiate_chat(message="Retrieve all slack channels that are found on my slack server. Use the slack tool to find it.",
+                                                        recipient=self.agents.slack_channel_assistant,
+                                                        max_turns=3)
+        for item in response.chat_history:
+            if item.get("tool_responses"):
+                for tool_response in item["tool_responses"]:
+                    self.all_channels += tool_response.get("content")
+        return response
+    
+    async def get_relevant_channels(self):
+        self._send_event("👀 Identifying relevant channels")
+        prompt = ""
+        if self.requirements.specific_channel_names:
+            prompt += f"User is looking for channels with specific names: {self.requirements.specific_channel_names}"
+            if self.requirements.types_of_channels:
+                prompt += f"\n User is also looking for channels of any name that meet the following criteria: {self.requirements.types_of_channels}"
         else:
-            reflection_message = self.context.last_step
-            self.context.answer_output.append(self.context.last_output)
-            self.context.steps_taken.append(self.context.last_step)
+            prompt += f"User is looking for channels of any name that meet the following criteria: {self.requirements.types_of_channels}"
+        prompt += f"\n The list of slack channels is as follows: {self.all_channels}"
 
-        # Now call the goal critic to check if we met our goal yet
-        goal_message = {
-            "Goal": self.context.goal,
-            "Plan": self.context.plan_dict,
-            "Information Gathered": self.context.answer_output,
-        }
-        output = await self.agents.user_proxy.a_initiate_chat(
-            recipient=self.agents.goal_judge,
-            max_turns=1,
-            message=f"(```{str(goal_message)}```",
-        )
+        response = await self.agents.user_proxy.a_initiate_chat(message=prompt, recipient=self.agents.channel_assistant_no_tools, max_turns=1)
+        self.relevant_channels = ChannelList(**json.loads(response.chat_history[-1]["content"]))
 
-        if "##NOT YET##" not in output.chat_history[-1]["content"]:
-            # We met our goal, so end the loop
-            return Reflection(decision="TERMINATE", message="").__dict__
+        channel_names = [channel.name for channel in self.relevant_channels.channels]
+        await self._send_event(f"🎯 Relevant channels identified: {channel_names}. Reason: {self.relevant_channels.explanation}")
 
-        # We did not meet our goal, so obtain the next instruction
-        message = {
-            "Goal": self.context.latest_content,
-            "Plan": str(self.context.plan_dict),
-            "Last Step": reflection_message,
-            "Last Step Output": str(self.context.last_output),
-            "Steps Taken": str(self.context.steps_taken),
-        }
-        response = await self.agents.user_proxy.a_initiate_chat(
-            recipient=self.agents.reflection_assistant,
-            max_turns=1,
-            message=f"(```{str(message)}```",
-        )
-        print(response)
-        return json.loads(response.chat_history[-1]["content"])
 
-    async def _execute_instruction(self, instruction):
-        await self.eventer.emit_event(message="Executing step: " + instruction)
-        prompt = instruction + (
-            f"\n Contextual Information: \n{self.context.answer_output}"
-            if self.context.answer_output
-            else ""
-        )
-        output = await self.agents.user_proxy.a_initiate_chat(
-            recipient=self.agents.assistant, max_turns=3, message=prompt
-        )
-        return [
-            item["content"]
-            for item in output.chat_history
-            if item.get("name") == "Research_Assistant" and item["content"]
-        ]
+    async def query_channel(self, channel: ChannelInfo):
+        self._send_event(f"📖 Querying channel {channel.name}")
+        prompt = f"Query the slack channel {channel.name}, that has the id {channel.id} to answer the user query/instruction: {self.user_query}"
+        response = await self.agents.user_proxy.a_initiate_chat(message=prompt, recipient=self.agents.slack_channel_assistant, max_turns=3)
+        data = {"channel_name": channel.name, "channel_id": channel.id, "output": response.chat_history[-1]["content"]}
+        return data
 
-    async def _summarize_results(self):
-        await self.eventer.emit_event(message="Summing up findings...")
-        if self.context.failure_reason:
-            final_prompt = (
-                f"A user sent an instruction/query: {self.context.goal}\n\n"
-                f"However it was unable to be fully answered/met because of the following reason: {self.context.failure_reason}"
-                f"Attempt to answer the query at least partially, if possible, while giving a detailed explanation as to why you cannot fulfill their request. Use the following information only to formulate your reply: {self.context.answer_output}"
-            )
-        else:
-            final_prompt = (
-                f"Directly answer the user's query: {self.context.goal}\n\n"
-                f"If you are unable to fully answer the user's query or instruction, give a detailed explanation as to why. Use the following information only to formulate your reply: {self.context.answer_output}"
-            )
-        final_output = await self.agents.user_proxy.a_initiate_chat(
-            message=final_prompt, max_turns=1, recipient=self.agents.report_generator
-        )
-        return final_output.chat_history[-1]["content"]
+    async def query_channels(self):
+        for channel in self.relevant_channels.channels:
+            self.channel_outputs.append(await self.query_channel(channel))
+    
+    async def summarize_data(self, data_to_summarize):
+        self._send_event(f"📄 Generating a final report")
+        prompt = f"You are a helpful assistant who will produce a detailed report to directly address the user's query: {self.user_query}. You will use ONLY the following data that has been gathered from slack. \
+            If you are unable to answer or only able to partially answer due to missing information or a specific error, please give detail to this. Information gathered: {data_to_summarize}"
+        response = await self.agents.user_proxy.a_initiate_chat(message=prompt, recipient=self.agents.report_generator, max_turns=1)
+        return response.chat_history[-1]["content"]
