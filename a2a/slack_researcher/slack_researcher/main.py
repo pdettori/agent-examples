@@ -70,15 +70,15 @@ class SlackAgent:
         prompt = f"Classify the intent of the user as either simply needing to list slack channel information or if their intent is querying the content of slack channels themselves. User query: {self.user_query}"
         response = await self.agents.user_proxy.a_initiate_chat(message=prompt, recipient=self.agents.intent_classifier, max_turns=1)
         self.user_intent = UserIntent(**json.loads(response.chat_history[-1]["content"]))
-        self._send_event(f"🧐 Identified user intent: {self.user_intent.intent}")
+        await self._send_event(f"🧐 Identified user intent: {self.user_intent.intent}")
 
     async def identify_requirements(self):
         response = await self.agents.user_proxy.a_initiate_chat(message=self.user_query, recipient=self.agents.requirement_identifier, max_turns=1)
         self.requirements = UserRequirement(**json.loads(response.chat_history[-1]["content"]))
-        self._send_event(f"📇 Identified channel requirements. Channel names: {self.requirements.specific_channel_names}, Channel types: {self.requirements.types_of_channels}")
+        await self._send_event(f"📇 Identified channel requirements. Channel names: {self.requirements.specific_channel_names}, Channel types: {self.requirements.types_of_channels}")
 
     async def list_all_channels(self):
-        self._send_event("🔎 Fetching all channels")
+        await self._send_event("🔎 Fetching all channels")
         response = await self.agents.user_proxy.a_initiate_chat(message="Retrieve all slack channels that are found on my slack server. Use the slack tool to find it.",
                                                         recipient=self.agents.slack_channel_assistant,
                                                         max_turns=3)
@@ -107,8 +107,10 @@ class SlackAgent:
 
 
     async def query_channel(self, channel: ChannelInfo):
-        self._send_event(f"📖 Querying channel {channel.name}")
-        prompt = f"Query the slack channel {channel.name}, that has the id {channel.id} to answer the user query/instruction: {self.user_query}"
+        await self._send_event(f"📖 Querying channel {channel.name}")
+        prompt = f"Retrieve the history from the slack channel with ID \"{channel.id}\" using the Slack tool available to you. \
+            Use the output of the tool to answer the user query/instruction. If you are unable to retrieve information from the channel, mention why, and do not say anything else. \
+                User query/instruction: {self.user_query}"
         response = await self.agents.user_proxy.a_initiate_chat(message=prompt, recipient=self.agents.slack_channel_assistant, max_turns=3)
         data = {"channel_name": channel.name, "channel_id": channel.id, "output": response.chat_history[-1]["content"]}
         return data
@@ -118,7 +120,7 @@ class SlackAgent:
             self.channel_outputs.append(await self.query_channel(channel))
     
     async def summarize_data(self, data_to_summarize):
-        self._send_event(f"📄 Generating a final report")
+        await self._send_event(f"📄 Generating a final report")
         prompt = f"You are a helpful assistant who will produce a detailed report to directly address the user's query: {self.user_query}. You will use ONLY the following data that has been gathered from slack. \
             If you are unable to answer or only able to partially answer due to missing information or a specific error, please give detail to this. Information gathered: {data_to_summarize}"
         response = await self.agents.user_proxy.a_initiate_chat(message=prompt, recipient=self.agents.report_generator, max_turns=1)
