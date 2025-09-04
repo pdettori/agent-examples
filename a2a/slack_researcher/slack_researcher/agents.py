@@ -9,9 +9,8 @@ from slack_researcher.config import Settings, settings
 from slack_researcher.llm import LLMConfig
 from slack_researcher.prompts import (
     ASSISTANT_PROMPT,
-    GOAL_JUDGE_PROMPT,
-    PLANNER_MESSAGE,
-    REFLECTION_ASSISTANT_PROMPT,
+    REQUIREMENT_IDENTIFIER_PROMPT,
+    CHANNEL_FILTER_PROMPT
 )
 
 logger = logging.getLogger(__name__)
@@ -32,52 +31,37 @@ class Agents:
 
         llm_config = LLMConfig(config)
 
-        # Generic LLM completion, used for servicing Open WebUI originated requests
-        self.generic_assistant = ConversableAgent(
-            name="Generic_Assistant",
-            llm_config=llm_config.openai_llm_config,
-            code_execution_config=False,
-            human_input_mode="NEVER",
-        )
-
-        # The assistant agent is responsible for executing each step of the plan, including calling tools
-        self.assistant = ConversableAgent(
-            name="Research_Assistant",
+        self.slack_channel_assistant = ConversableAgent(
             system_message=ASSISTANT_PROMPT,
-            code_execution_config=False,
+            name="Slack_Channel_Assistant",
             llm_config=llm_config.openai_llm_config,
-            human_input_mode="NEVER",
-            is_termination_msg=lambda msg: "tool_response" not in msg
-            and msg["content"] == "",
-        )
-
-        # Determines whether the ultimate objective has been met
-        self.goal_judge = ConversableAgent(
-            name="GoalJudge",
-            system_message=GOAL_JUDGE_PROMPT,
             code_execution_config=False,
-            llm_config=llm_config.openai_llm_config,
             human_input_mode="NEVER",
         )
 
-        # Step Critic
-        self.step_critic = ConversableAgent(
-            name="Step_Critic",
+        self.intent_classifier = ConversableAgent(
+            name="Intent_Classifier",
+            llm_config=llm_config.intent_classifier_llm_config,
             code_execution_config=False,
-            llm_config=llm_config.openai_llm_config,
             human_input_mode="NEVER",
         )
 
-        # Reflection Assistant: Reflect on plan progress and give the next step
-        self.reflection_assistant = ConversableAgent(
-            name="ReflectionAssistant",
-            system_message=REFLECTION_ASSISTANT_PROMPT,
+        self.requirement_identifier = ConversableAgent(
+            name="Requirement_Identifier",
+            system_message=REQUIREMENT_IDENTIFIER_PROMPT,
+            llm_config=llm_config.user_requirement_llm_config,
             code_execution_config=False,
-            llm_config=llm_config.openai_llm_config,
             human_input_mode="NEVER",
         )
 
-        # Report Generator
+        self.channel_assistant_no_tools = ConversableAgent(
+            name="Slack_Channel_Assistant_NO_TOOLS",
+            system_message=CHANNEL_FILTER_PROMPT,
+            llm_config=llm_config.channel_llm_config,
+            code_execution_config=False,
+            human_input_mode="NEVER",
+        )
+
         self.report_generator = ConversableAgent(
             name="Report_Generator",
             llm_config=llm_config.openai_llm_config,
@@ -94,7 +78,7 @@ class Agents:
             and "content" in msg
             and msg["content"] is not None
             and (
-                "##ANSWER##" in msg["content"]
+                "##ANSWER" in msg["content"]
                 or "## Answer" in msg["content"]
                 or "##TERMINATE##" in msg["content"]
                 or ("tool_calls" not in msg and msg["content"] == "")
@@ -119,7 +103,7 @@ class Agents:
             logging.info("Registering MCP tool")
             logging.info(mcp_toolkit)
             mcp_toolkit.register_for_execution(self.user_proxy)
-            mcp_toolkit.register_for_llm(self.assistant)
+            mcp_toolkit.register_for_llm(self.slack_channel_assistant)
             tool_descriptions = []
             for tool in mcp_toolkit.tools:
                 tool_descriptions.append({tool.name : tool.description})
@@ -127,12 +111,3 @@ class Agents:
             logging.info("Tool descriptions: %s", tool_descriptions)
         else:
             logging.info("No MCP tools to register")
-
-        # Provides the initial high level plan
-        self.planner = ConversableAgent(
-            name="Planner",
-            system_message=PLANNER_MESSAGE.format(tool_descriptions=tool_descriptions),
-            llm_config=llm_config.planner_llm_config,
-            human_input_mode="NEVER",
-        )
-
