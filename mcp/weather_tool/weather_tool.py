@@ -1,8 +1,9 @@
 import os
+import json
 import requests
-from mcp.server.fastmcp import FastMCP
+from fastmcp import FastMCP
 
-mcp = FastMCP("Weather", host="0.0.0.0", port=8000)
+mcp = FastMCP("Weather")
 
 @mcp.tool()
 def get_weather(city: str) -> str:
@@ -25,13 +26,15 @@ def get_weather(city: str) -> str:
     weather_response = requests.get(weather_url, params=weather_params)
     weather_data = weather_response.json()
 
-    return weather_data["current_weather"]
+    return json.dumps(weather_data["current_weather"])
 
 # host can be specified with HOST env variable
 # transport can be specified with MCP_TRANSPORT env variable (defaults to streamable-http)
 def run_server():
     transport = os.getenv("MCP_TRANSPORT", "streamable-http")
-    mcp.run(transport=transport) 
+    host = os.getenv("HOST", "0.0.0.0")
+    port = int(os.getenv("PORT", "8000"))
+    mcp.run(transport=transport, host=host, port=port) 
 
 if __name__ == "__main__":
     run_server()
