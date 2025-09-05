@@ -10,7 +10,8 @@ from slack_researcher.llm import LLMConfig
 from slack_researcher.prompts import (
     ASSISTANT_PROMPT,
     REQUIREMENT_IDENTIFIER_PROMPT,
-    CHANNEL_FILTER_PROMPT
+    CHANNEL_FILTER_PROMPT,
+    SUMMARIZER_PROMPT
 )
 
 logger = logging.getLogger(__name__)
@@ -64,6 +65,7 @@ class Agents:
 
         self.report_generator = ConversableAgent(
             name="Report_Generator",
+            system_message=SUMMARIZER_PROMPT,
             llm_config=llm_config.openai_llm_config,
             code_execution_config=False,
             human_input_mode="NEVER",
