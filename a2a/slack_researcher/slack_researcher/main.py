@@ -108,11 +108,19 @@ class SlackAgent:
 
     async def query_channel(self, channel: ChannelInfo):
         await self._send_event(f"📖 Querying channel {channel.name}")
-        prompt = f"Retrieve the history from the slack channel with ID \"{channel.id}\" using the Slack tool available to you. \
-            Use the output of the tool to answer the user query/instruction. If you are unable to retrieve information from the channel, mention why, and do not say anything else. \
-                User query/instruction: {self.user_query}"
+        prompt = f"Retrieve the history from the slack channel with ID \"{channel.id}\" using the Slack tool available to you. The data retrieved will be user to answer the following user query/instruction: {self.user_query}"
         response = await self.agents.user_proxy.a_initiate_chat(message=prompt, recipient=self.agents.slack_channel_assistant, max_turns=3)
-        data = {"channel_name": channel.name, "channel_id": channel.id, "output": response.chat_history[-1]["content"]}
+
+        # We're going to capture the raw channel data for analysis later
+        channel_data = ""
+        for item in response.chat_history:
+            if item.get("tool_responses"):
+                for tool_response in item["tool_responses"]:
+                    channel_data += tool_response.get("content")
+        # If not tool output exists, just take the agent's response
+        if channel_data == "":
+            channel_data = response.chat_history[-1]["content"]
+        data = {"channel_name": channel.name, "channel_id": channel.id, "output": channel_data}
         return data
 
     async def query_channels(self):
@@ -121,7 +129,6 @@ class SlackAgent:
     
     async def summarize_data(self, data_to_summarize):
         await self._send_event(f"📄 Generating a final report")
-        prompt = f"You are a helpful assistant who will produce a detailed report to directly address the user's query: {self.user_query}. You will use ONLY the following data that has been gathered from slack. \
-            If you are unable to answer or only able to partially answer due to missing information or a specific error, please give detail to this. Information gathered: {data_to_summarize}"
+        prompt = f"User query: {self.user_query}. \n Information gathered: {data_to_summarize}"
         response = await self.agents.user_proxy.a_initiate_chat(message=prompt, recipient=self.agents.report_generator, max_turns=1)
         return response.chat_history[-1]["content"]
