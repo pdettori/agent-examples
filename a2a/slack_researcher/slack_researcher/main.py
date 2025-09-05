@@ -108,7 +108,7 @@ class SlackAgent:
 
     async def query_channel(self, channel: ChannelInfo):
         await self._send_event(f"📖 Querying channel {channel.name}")
-        prompt = f"Retrieve the history from the slack channel with ID \"{channel.id}\" using the Slack tool available to you. The data retrieved will be user to answer the following user query/instruction: {self.user_query}"
+        prompt = f"Retrieve the history from the slack channel with ID \"{channel.id}\" using the Slack tool available to you. The data retrieved will be used to answer the following user query/instruction: {self.user_query}"
         response = await self.agents.user_proxy.a_initiate_chat(message=prompt, recipient=self.agents.slack_channel_assistant, max_turns=3)
 
         # We're going to capture the raw channel data for analysis later
@@ -117,7 +117,7 @@ class SlackAgent:
             if item.get("tool_responses"):
                 for tool_response in item["tool_responses"]:
                     channel_data += tool_response.get("content")
-        # If not tool output exists, just take the agent's response
+        # If no tool output exists, just take the agent's response
         if channel_data == "":
             channel_data = response.chat_history[-1]["content"]
         data = {"channel_name": channel.name, "channel_id": channel.id, "output": channel_data}
