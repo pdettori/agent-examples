@@ -25,7 +25,7 @@ from starlette.middleware.authentication import AuthenticationMiddleware
 
 from slack_researcher.config import settings, Settings
 from slack_researcher.event import Event
-from slack_researcher.main import RagAgent
+from slack_researcher.main import SlackAgent
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG, stream=sys.stdout, format='%(levelname)s: %(message)s')
@@ -55,16 +55,16 @@ def get_agent_card(host: str, port: int):
     skill = AgentSkill(
         id="slack_researcher",
         name="Slack research agent",
-        description="Answer queries by searching thorugh a given slack server",
+        description="Answer queries by searching through a given slack server",
         tags=["research", "slack", "search", "report"],
         examples=[
             "Find me the most popular channels for discussing AI agents",
-            "Summarize what's been happening in the general channel lateley",
+            "Summarize what's been happening in the general channel lately",
         ],
     )
     return AgentCard(
         name="Web Research Agent",
-        description="Answer queries by searching thorugh a given slack server",
+        description="Answer queries by searching through a given slack server",
         url=f"http://{host}:{port}/",
         version="1.0.0",
         default_input_modes=["text"],
@@ -137,13 +137,13 @@ class ResearchExecutor(AgentExecutor):
         assistant_tool_map: dict[str, Callable],
         toolkit: Toolkit):
 
-        rag_agent = RagAgent(
+        slack_agent = SlackAgent(
             config=settings,
             eventer=event_emitter,
             assistant_tools=assistant_tool_map,
             mcp_toolkit=toolkit,
         )
-        result = await rag_agent.run_workflow(messages)
+        result = await slack_agent.execute(messages)
         await event_emitter.emit_event(result, True)
 
     async def execute(self, context: RequestContext, event_queue: EventQueue):
@@ -211,7 +211,7 @@ class ResearchExecutor(AgentExecutor):
 
         except Exception as e:
             traceback.print_exc()
-            await event_emitter.emit_event(f"Exception encountered: {str(e)}", True)
+            await event_emitter.emit_event(f"I'm sorry I was unable to fulfill your request. I encountered the following exception: {str(e)}", True)
 
     async def cancel(self, context: RequestContext, event_queue: EventQueue) -> None:
         """
