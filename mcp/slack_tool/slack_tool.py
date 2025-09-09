@@ -55,8 +55,7 @@ mcp = FastMCP("Slack", host="0.0.0.0", port=8000,
 @mcp.tool()
 def get_channels() -> List[Dict[str, Any]]:
     """
-    Lists all public and private channels the bot has access to.
-    The docstring is crucial as it becomes the tool's description for the LLM.
+    Lists all public and private slack channels you have access to.
     """
     logger.debug(f"Called get_channels tool")
 
