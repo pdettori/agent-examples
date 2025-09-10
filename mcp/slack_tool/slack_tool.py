@@ -55,8 +55,7 @@ mcp = FastMCP("Slack", host="0.0.0.0", port=8000,
 @mcp.tool()
 def get_channels() -> List[Dict[str, Any]]:
     """
-    Lists all public and private channels the bot has access to.
-    The docstring is crucial as it becomes the tool's description for the LLM.
+    Lists all public and private slack channels you have access to.
     """
     logger.debug(f"Called get_channels tool")
 
@@ -101,7 +100,8 @@ def get_channel_history(channel_id: str, limit: int = 20) -> List:
     try:
         # Call the Slack API to list conversations the bot is part of.
         response = slack_client.conversations_history(
-            channel=channel_id
+            channel=channel_id,
+            limit=limit
         )
         logger.debug(f"Successful get_channel_history call: {response}")
         return response.get("messages",)
