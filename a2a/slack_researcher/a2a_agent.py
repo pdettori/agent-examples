@@ -59,15 +59,19 @@ class AuthenticationError(StarletteAuthenticationError):
 
 class BearerAuthBackend(AuthenticationBackend):
     def __init__(self):
-        if settings.AUDIENCE is None:
-            raise Exception("AUDIENCE env var not set")
-        if settings.ISSUER is None:
-            raise Exception("ISSUER env var not set")
         if settings.JWKS_URL is None: # TODO implement oidc discovery in this case
             raise Exception("JWKS_URL env var not set. ")
-        self.expected_audience = settings.AUDIENCE
-        self.issuer = settings.ISSUER
-        self.jwks_url = settings.JWKS_URL
+        settings.jwks_url = settings.JWKS_URL
+
+        self.claims_options = {}
+        if settings.AUDIENCE is None:
+            logger.debug(f"AUDIENCE env var not set. No audience check will be performed. ")
+        else:
+            self.claims_options["aud"] = {"essential": True, "value": settings.AUDIENCE}
+        if settings.ISSUER is None:
+            logger.debug(f"ISSUER env var no set. No issuer check will be performed")
+        else:
+            self.claims_options["iss"] = {"essential": True, "value": settings.ISSUER}
 
     async def get_jwks(self):
         logger.debug(f"Fetching JWKS from {self.jwks_url}")
@@ -110,11 +114,7 @@ class BearerAuthBackend(AuthenticationBackend):
 
         try: 
             # decode and validate claims
-            claims_options = {
-                "iss": {"essential": True, "value": self.issuer},
-                "aud": {"essential": True, "value": self.expected_audience},
-            }
-            claims = jwt.decode(s=token, key=jwks, claims_options=claims_options)
+            claims = jwt.decode(s=token, key=jwks, claims_options=self.claims_options)
             claims.validate()
             logger.debug("Token successfully validated.")
 
@@ -313,6 +313,9 @@ def run():
     )
 
     app = server.build()  # this returns a Starlette app
-    app.add_middleware(AuthenticationMiddleware, backend=BearerAuthBackend(), on_error=on_auth_error)
+    # if one of the auth variables is set, create middleware
+    # if none of them are set, ignore all authorization headers. No token validation will be performed
+    if not settings.JWKS_URL is None:
+        app.add_middleware(AuthenticationMiddleware, backend=BearerAuthBackend(), on_error=on_auth_error)
 
     uvicorn.run(app, host="0.0.0.0", port=settings.SERVICE_PORT)
