@@ -38,3 +38,5 @@ When deploying in the Kagenti UI - You will need to attach 3 environments to the
 1. `ollama` or `openai` (Slack Researcher is looking for the values of `LLM_API_BASE` and `LLM_API_KEY` - Either ollama or any other OpenAI-compatible API will work)
 2. `mcp-slack` - This provides the value of the slack MCP server (`MCP_URL`)
 3. `slack-researcher` - This provides the remainder of the necessary configuration settings
+
+NOTE if you are connecting to a tool that is OAuth-secured, you MUST set the `JWKS_URL` variable or the token will not be passed to the tool. 
