@@ -6,7 +6,6 @@ from fastmcp import FastMCP
 from fastmcp.server.dependencies import get_access_token, AccessToken
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
-from auth import get_auth_provider
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=os.getenv("LOG_LEVEL", "DEBUG"), stream=sys.stdout, format='%(levelname)s: %(message)s')
@@ -51,8 +50,7 @@ def get_slack_client(access_token=None):
 
 # Create FastMCP app with same parameters as original
 # This combines both token_verifier and auth functionality from the original
-auth_provider = get_auth_provider()
-mcp = FastMCP("Slack", auth=auth_provider)
+mcp = FastMCP("Slack")
 
 @mcp.tool()
 def get_channels() -> List[Dict[str, Any]]:
@@ -127,19 +125,14 @@ if __name__ == "__main__":
     if SLACK_BOT_TOKEN is None: # default slack token
         logger.warning("Please configure the SLACK_BOT_TOKEN environment variable before running the server")
     elif ADMIN_SLACK_BOT_TOKEN is None: # one token set -> we just validate the JWT
-        logger.info("Configured SLACK_BOT_TOKEN environment variable but not ADMIN_SLACK_BOT_TOKEN; will validate token signature")
+        logger.info("Configured SLACK_BOT_TOKEN environment variable but not ADMIN_SLACK_BOT_TOKEN; all requests will use the `SLACK_BOT_TOKEN` to reach the Slack API")
         logger.info("Starting Slack MCP Server")
         run_server()
     else: # two tokens set -> we validate the JWT and connect to slack based on access token scope
         # check if other required Auth variables are set
-        introspection_endpoint = os.getenv("INTROSPECTION_ENDPOINT")
-        client_id = os.getenv("CLIENT_ID")
-        client_secret = os.getenv("CLIENT_SECRET")
-        expected_audience = os.getenv("AUDIENCE")
-        admin_scope = os.getenv("ADMIN_SCOPE_NAME")
-        issuer = os.getenv("ISSUER")
-        if None in [introspection_endpoint, client_id, client_secret, expected_audience, issuer, admin_scope]:
-            logger.error("Configured ADMIN_SLACK_BOT_TOKEN but not one or more of INTROSPECTION_ENDPOINT, CLIENT_ID, CLIENT_SECRET, AUDIENCE, ISSUER. ")
+        auth = os.getenv("FASTMCP_SERVER_AUTH")
+        if auth is None:
+            logger.error("Configured ADMIN_SLACK_BOT_TOKEN but auth is not configured - fine grained authz requires token validation")
         else: 
             logger.info("Configured two slack tokens; finer-grained authz enabled")
             logger.info("Starting Slack MCP Server")
