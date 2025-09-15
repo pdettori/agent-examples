@@ -4,6 +4,7 @@ Module for A2A Agent.
 
 import logging
 import sys
+import httpx
 import traceback
 from typing import Callable
 
@@ -21,7 +22,11 @@ from a2a.types import AgentCapabilities, AgentCard, AgentSkill, TaskState, TextP
 from a2a.utils import new_agent_text_message, new_task
 
 from starlette.authentication import AuthCredentials, SimpleUser, AuthenticationBackend
+from starlette.authentication import AuthenticationError as StarletteAuthenticationError
 from starlette.middleware.authentication import AuthenticationMiddleware
+
+from authlib.jose import jwt
+from authlib.common.errors import AuthlibBaseError
 
 from slack_researcher.config import settings, Settings
 from slack_researcher.event import Event
@@ -30,24 +35,93 @@ from slack_researcher.main import SlackAgent
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG, stream=sys.stdout, format='%(levelname)s: %(message)s')
 
-class BearerAuthBackend(AuthenticationBackend):
-    """ Very temporary demo to grab auth token and print it"""
-    async def authenticate(self, conn):
-        try:
-            auth = conn.headers.get("authorization")
-            if not auth or not auth.lower().startswith("bearer "):
-                print("No bearer token provided")
-                return
-            token = auth.split(" ", 1)[1]
-            print(f"TOKEN: {token}")
+def on_auth_error(request: Request, e: Exception):
+    status_code = 401
+    message = "Authentication failed"
+    headers = {"WWW-Authenticate": "Bearer"}
 
-            # Storing the token as the username - not a real life scenario - just demo-ing the passing of creds
+    if isinstance(e, AuthenticationError):
+        status_code = e.status_code
+    message = str(e)
+
+    return JSONResponse(
+        {"error": message},
+        status_code = status_code,
+        headers=headers if status_code == 401 else None
+    )
+
+class AuthenticationError(StarletteAuthenticationError):
+    def __init__(self, message: str, status_code: int = 401):
+        self.status_code = status_code
+        super().__init__(message)
+
+class BearerAuthBackend(AuthenticationBackend):
+    def __init__(self):
+        if settings.AUDIENCE is None:
+            raise Exception("AUDIENCE env var not set")
+        if settings.ISSUER is None:
+            raise Exception("ISSUER env var not set")
+        if settings.JWKS_URL is None: # TODO implement oidc discovery in this case
+            raise Exception("JWKS_URL env var not set. ")
+        self.expected_audience = settings.AUDIENCE
+        self.issuer = settings.ISSUER
+        self.jwks_url = settings.JWKS_URL
+
+    async def get_jwks(self):
+        logger.debug(f"Fetching JWKS from {self.jwks_url}")
+        jwks = None
+        try: 
+            async with httpx.AsyncClient() as client:
+                response = await client.get(self.jwks_url)
+                response.raise_for_status()
+                jwks = response.json() # TODO should probably use caching
+                return jwks
+        except httpx.HTTPStatusError as e:
+            logger.debug(f"Could not retrieve JWKS from {self.jwks_url}: {e}")
+            return None
+
+    async def get_token(self, conn):
+        logger.debug("Obtaining bearer token...")
+        headers = conn.headers
+        logger.debug(f"Headers obtained: {headers}")
+        auth = headers.get("authorization")
+        if not auth or not auth.lower().startswith("bearer "):
+            logger.error("Expected `Authorization: Bearer` access token; None provided. ")
+            return None
+        token = auth.split(" ", 1)[1]
+        return token
+
+    """This is run upon every received request"""
+    async def authenticate(self, conn):
+        # bypass authentication for agent card
+        if conn.scope.get("path") == "/.well-known/agent.json":
+            logger.debug("Bypassing authentication for public agent card path")
+            return None
+        
+        # extract token
+        token = await self.get_token(conn)
+        if token is None:
+            raise AuthenticationError(message = "Bearer token not found in Authorization header.")
+
+        # fetch jwks
+        jwks = await self.get_jwks()
+
+        try: 
+            # decode and validate claims
+            claims_options = {
+                "iss": {"essential": True, "value": self.issuer},
+                "aud": {"essential": True, "value": self.audience},
+            }
+            claims = jwt.decode(s=token, key=jwks, claims_options=claims_options)
+            claims.validate()
+            logger.debug("Token successfully validated.")
+
+            # return user
             user = SimpleUser(token)
             return AuthCredentials(["authenticated"]), user
-        except Exception as e:
-            logger.error("Exception when attempting to obtain user token")
-            logger.error(e)
-    
+        except AuthlibBaseError as e:
+            logger.error(f"Token validation failed: {e}")
+            raise AuthenticationError(f"Invalid token: {e}, status_code=401")
 
 def get_agent_card(host: str, port: int):
     """Returns the Agent Card for the AG2 Agent."""
@@ -237,6 +311,6 @@ def run():
     )
 
     app = server.build()  # this returns a Starlette app
-    app.add_middleware(AuthenticationMiddleware, backend=BearerAuthBackend())
+    app.add_middleware(AuthenticationMiddleware, backend=BearerAuthBackend(), on_error=on_auth_error)
 
     uvicorn.run(app, host="0.0.0.0", port=settings.SERVICE_PORT)
