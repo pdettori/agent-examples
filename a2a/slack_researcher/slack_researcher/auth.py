@@ -39,7 +39,7 @@ class BearerAuthBackend(AuthenticationBackend):
     def __init__(self):
         if settings.JWKS_URL is None: # TODO implement oidc discovery in this case
             raise Exception("JWKS_URL env var not set. ")
-        settings.jwks_url = settings.JWKS_URL
+        self.jwks_url = settings.JWKS_URL
 
         self.claims_options = {}
         if settings.AUDIENCE is None:
