@@ -112,7 +112,7 @@ class BearerAuthBackend(AuthenticationBackend):
             # decode and validate claims
             claims_options = {
                 "iss": {"essential": True, "value": self.issuer},
-                "aud": {"essential": True, "value": self.audience},
+                "aud": {"essential": True, "value": self.expected_audience},
             }
             claims = jwt.decode(s=token, key=jwks, claims_options=claims_options)
             claims.validate()
