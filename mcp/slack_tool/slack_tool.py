@@ -59,7 +59,7 @@ if not JWKS_URI is None:
     verifier = JWTVerifier(
         jwks_uri = JWKS_URI,
         issuer = ISSUER,
-        AUDIENCE = AUDIENCE
+        audience = AUDIENCE
     )
 mcp = FastMCP("Slack", auth=verifier)
 
