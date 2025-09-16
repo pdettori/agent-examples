@@ -4,6 +4,7 @@ import logging
 from typing import List, Dict, Any
 from fastmcp import FastMCP
 from fastmcp.server.dependencies import get_access_token, AccessToken
+from fastmcp.server.auth.providers.jwt import JWTVerifier
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
 
@@ -48,9 +49,19 @@ def get_slack_client(access_token=None):
     return slack_client_from_bot_token(SLACK_BOT_TOKEN)
 
 
-# Create FastMCP app with same parameters as original
-# This combines both token_verifier and auth functionality from the original
-mcp = FastMCP("Slack")
+# Create FastMCP app
+# Temporary environment variables to manually create verifier
+verifier = None
+JWKS_URI = os.getenv("JWKS_URI")
+ISSUER = os.getenv("ISSUER")
+AUDIENCE = os.getenv("AUDIENCE")
+if not JWKS_URI is None:
+    verifier = JWTVerifier(
+        jwks_uri = JWKS_URI,
+        issuer = ISSUER,
+        AUDIENCE = AUDIENCE
+    )
+mcp = FastMCP("Slack", auth=verifier)
 
 @mcp.tool()
 def get_channels() -> List[Dict[str, Any]]:
@@ -130,7 +141,7 @@ if __name__ == "__main__":
         run_server()
     else: # two tokens set -> we validate the JWT and connect to slack based on access token scope
         # check if other required Auth variables are set
-        auth = os.getenv("FASTMCP_SERVER_AUTH")
+        auth = os.getenv("JWKS_URI")
         if auth is None:
             logger.error("Configured ADMIN_SLACK_BOT_TOKEN but auth is not configured - fine grained authz requires token validation")
         else: 
