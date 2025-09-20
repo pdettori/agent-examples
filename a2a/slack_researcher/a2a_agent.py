@@ -221,6 +221,7 @@ def run():
     # if one of the auth variables is set, create middleware
     # if none of them are set, ignore all authorization headers. No token validation will be performed
     if not settings.JWKS_URL is None:
+        logging.info("JWKS_URI is set - using JWT Validation middleware")
         app.add_middleware(AuthenticationMiddleware, backend=BearerAuthBackend(), on_error=on_auth_error)
 
     uvicorn.run(app, host="0.0.0.0", port=settings.SERVICE_PORT)

@@ -41,8 +41,8 @@ class Settings(BaseSettings):
         os.getenv("ISSUER", None), 
         description="The issuer for incoming JWT tokens"
     )
-    JWKS_URL: Optional[str] = Field(
-        os.getenv("JWKS_URL", None),
+    JWKS_URI: Optional[str] = Field(
+        os.getenv("JWKS_URI", None),
         description="Endpoint to obtain JWKS from auth server"
     )
     AUDIENCE: Optional[str] = Field(
