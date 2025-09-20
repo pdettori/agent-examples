@@ -37,9 +37,9 @@ class AuthenticationError(StarletteAuthenticationError):
 
 class BearerAuthBackend(AuthenticationBackend):
     def __init__(self):
-        if settings.JWKS_URL is None: # TODO implement oidc discovery in this case
-            raise Exception("JWKS_URL env var not set. ")
-        self.jwks_url = settings.JWKS_URL
+        if settings.JWKS_URI is None: # TODO implement oidc discovery in this case
+            raise Exception("JWKS_URI env var not set. ")
+        self.jwks_url = settings.JWKS_URI
 
         self.claims_options = {}
         if settings.AUDIENCE is None:
