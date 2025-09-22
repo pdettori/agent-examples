@@ -20,34 +20,15 @@ from a2a.server.tasks import InMemoryTaskStore, TaskUpdater
 from a2a.types import AgentCapabilities, AgentCard, AgentSkill, TaskState, TextPart, SecurityScheme, HTTPAuthSecurityScheme
 from a2a.utils import new_agent_text_message, new_task
 
-from starlette.authentication import AuthCredentials, SimpleUser, AuthenticationBackend
 from starlette.middleware.authentication import AuthenticationMiddleware
 
 from slack_researcher.config import settings, Settings
 from slack_researcher.event import Event
 from slack_researcher.main import SlackAgent
+from slack_researcher.auth import on_auth_error, BearerAuthBackend
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG, stream=sys.stdout, format='%(levelname)s: %(message)s')
-
-class BearerAuthBackend(AuthenticationBackend):
-    """ Very temporary demo to grab auth token and print it"""
-    async def authenticate(self, conn):
-        try:
-            auth = conn.headers.get("authorization")
-            if not auth or not auth.lower().startswith("bearer "):
-                print("No bearer token provided")
-                return
-            token = auth.split(" ", 1)[1]
-            print(f"TOKEN: {token}")
-
-            # Storing the token as the username - not a real life scenario - just demo-ing the passing of creds
-            user = SimpleUser(token)
-            return AuthCredentials(["authenticated"]), user
-        except Exception as e:
-            logger.error("Exception when attempting to obtain user token")
-            logger.error(e)
-    
 
 def get_agent_card(host: str, port: int):
     """Returns the Agent Card for the AG2 Agent."""
@@ -237,6 +218,10 @@ def run():
     )
 
     app = server.build()  # this returns a Starlette app
-    app.add_middleware(AuthenticationMiddleware, backend=BearerAuthBackend())
+    # if one of the auth variables is set, create middleware
+    # if none of them are set, ignore all authorization headers. No token validation will be performed
+    if not settings.JWKS_URI is None:
+        logging.info("JWKS_URI is set - using JWT Validation middleware")
+        app.add_middleware(AuthenticationMiddleware, backend=BearerAuthBackend(), on_error=on_auth_error)
 
     uvicorn.run(app, host="0.0.0.0", port=settings.SERVICE_PORT)
