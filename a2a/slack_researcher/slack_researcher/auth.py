@@ -134,6 +134,10 @@ class TokenExchanger:
             'subject_token': subject_token,
         }
         # TODO add audience, scope if populated
+        if not audience is None:
+            data['audience'] = audience
+        if not scope is None:
+            data['scope'] = scope
         # make token endpoint call
         logger.debug('Performing token exchange')
         async with httpx.AsyncClient() as client:
@@ -151,13 +155,13 @@ class TokenExchanger:
                 logger.error(f"Token exchange failed with status {e.response.status_code}: {e}")
                 raise AuthenticationError("Token endpoint call failed.")
 
-async def auth_headers(access_token):
+async def auth_headers(access_token, target_audience = None, target_scopes = None):
     headers = {}
     if not access_token:
         return headers
     try:
         token_exchanger = TokenExchanger()
-        access_token = await token_exchanger.exchange(access_token)
+        access_token = await token_exchanger.exchange(access_token, audience=target_audience, scope=target_scopes)
     except AuthenticationError as e:
         logging.error(f"Error performing token exchange - returning empty headers: {e}")
         return headers # 

@@ -24,11 +24,17 @@ The Slack Researcher Agent is designed to perform research tasks across Slack ch
 | JWKS_URL | Endpoint to obtain JWKS for token validation. Enables token validation | No | - |
 | ISSUER | Expected `iss` value of incoming bearer tokens | No | - |
 | AUDIENCE | Expected `aud` value of incoming bearer tokens | No | - |
+| TOKEN_URL | Endpoint to perform token exchange. Required for token exchange. | No | - |
+| CLIENT_ID | Client ID to authenticate to auth server with. Required for token exchange. | No | - |
+| CLIENT_SECRET | Client secret to authenticate to auth server with. Required for token exchange. | No | - |
 
 > **Note on Authorization configuration**
 > By default, no token validation is performed. To enable token validation, set `JWKS_URL`. 
 > If `ISSUER` is additionally set, the `iss` claim will be checked to equal this value. 
 > If `AUDIENCE` is additionally set, the `aud` claim will be checked to equal this value. 
+> If all of `TOKEN_URL`, `CLIENT_ID`, and `CLIENT_SECRET` are set in addition, token exchange will be performed using Bearer tokens from incoming requests, to send to the MCP endpoint. 
+
+
 
 ## Running in Kagenti
 When deploying in the Kagenti UI - You will need to attach 3 environments to the agent deployment:

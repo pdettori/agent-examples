@@ -63,6 +63,14 @@ class Settings(BaseSettings):
         os.getenv("CLIENT_SECRET", None),
         description="Client secret to authenticate to OAuth server"
     )
+    TARGET_AUDIENCE: Optional[str] = Field(
+        os.getenv("TARGET_AUDIENCE", None),
+        description="Target audience to request during token exchange"
+    )
+    TARGET_SCOPES: Optional[str] = Field(
+        os.getenv("TARGET_SCOPES", None),
+        description="Target scopes to request during token exchange"
+    )
 
     class Config:
         env_file = ".env"

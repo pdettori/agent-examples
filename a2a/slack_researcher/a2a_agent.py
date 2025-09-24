@@ -164,7 +164,11 @@ class ResearchExecutor(AgentExecutor):
             if settings.MCP_URL:
                 logging.info("Connecting to MCP server at %s", settings.MCP_URL)
 
-                headers = await auth_headers(user_token)
+                headers = await auth_headers(
+                    user_token, 
+                    target_audience=settings.TARGET_AUDIENCE, 
+                    target_scopes=settings.TARGET_SCOPES
+                )
 
                 async with streamablehttp_client(
                     url=settings.MCP_URL,
