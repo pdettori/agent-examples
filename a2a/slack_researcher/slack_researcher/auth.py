@@ -142,8 +142,8 @@ class TokenExchanger:
                 response.raise_for_status() # raise exception if Http status error
                 token_data = response.json()
                 if "access_token" in token_data:
-                    logger.debug("Successful token exchange")
                     new_token = token_data["access_token"]
+                    logger.debug(f"Successful token exchange. Using token: {new_token}")
                     return new_token
                 logger.error("Token exchange failed.")
                 raise AuthenticationError("Token exchange failed. Identity provider response did not include 'access_token'")
