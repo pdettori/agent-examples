@@ -124,13 +124,13 @@ class TokenExchanger:
     async def exchange(self, subject_token: str, audience: str = None, scope: str = None) -> str:
         return subject_token
 
-def auth_headers(access_token):
+async def auth_headers(access_token):
     headers = {}
     if not access_token:
         return headers
     try:
         token_exchanger = TokenExchanger()
-        access_token = token_exchanger.exchange(access_token)
+        access_token = await token_exchanger.exchange(access_token)
     except Exception as e:
         logging.debug(f"Error creating token exchanger - will passthrough token")
 
