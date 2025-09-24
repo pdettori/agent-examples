@@ -138,7 +138,7 @@ class ResearchExecutor(AgentExecutor):
         Returns:
             None
         """
-        user_token = context.call_context.user.access_token
+        user_token = context.request.user.access_token
         user_input = [context.get_user_input()]
         task = context.current_task
         if not task:
