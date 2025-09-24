@@ -36,9 +36,9 @@ class Settings(BaseSettings):
     MCP_URL: str = Field(os.getenv("MCP_URL", "http://slack-tool:8000"), description="Endpoint for an option MCP server")
     SERVICE_PORT: int = Field(os.getenv("SERVICE_URL", 8000), description="Port on which the service will run.")
 
-    # auth variables
+    # auth variables for token validation
     ISSUER: Optional[str] = Field(
-        os.getenv("ISSUER", None), 
+        os.getenv("ISSUER", None),
         description="The issuer for incoming JWT tokens"
     )
     JWKS_URI: Optional[str] = Field(
@@ -48,6 +48,20 @@ class Settings(BaseSettings):
     AUDIENCE: Optional[str] = Field(
         os.getenv("AUDIENCE", None),
         description="Expected audience value during resource validation"
+    )
+
+    # auth variables for token exchange
+    TOKEN_URL: Optional[str] = Field(
+        os.getenv("TOKEN_URL", None),
+        description="Token endpoint to obtain new access tokens"
+    )
+    CLIENT_ID: Optional[str] = Field(
+        os.getenv("CLIENT_ID", None),
+        description="Client ID to authenticate to OAuth server"
+    )
+    CLIENT_SECRET: Optional[str] = Field(
+        os.getenv("CLIENT_SECRET", None),
+        description="Client secret to authenticate to OAuth server"
     )
 
     class Config:

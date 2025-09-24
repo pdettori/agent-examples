@@ -97,8 +97,42 @@ class BearerAuthBackend(AuthenticationBackend):
             logger.debug("Token successfully validated.")
 
             # return user
-            user = SimpleUser(token)
-            return AuthCredentials(["authenticated"]), user
+            user = AgentUser(token=token, claims=claims)
+            return AuthCredentials(user.scopes()), user
         except AuthlibBaseError as e:
             logger.error(f"Token validation failed: {e}")
             raise AuthenticationError(f"Invalid token: {e}, status_code=401")
+
+class AgentUser(SimpleUser):
+    def __init__(self, token, claims) -> None:
+        super().__init__(username=claims.get("sub"))
+        self.access_token = token
+        self.claims = claims
+
+    def scopes(self) -> list[str]:
+        scope = self.claims.get("scope", "")
+        return scope.split()
+
+class TokenExchanger:
+    def __init__(self):
+        if None in [settings.TOKEN_URL, settings.CLIENT_ID, settings.CLIENT_SECRET]:
+            raise Exception("One of TOKEN_URL, CLIENT_ID, CLIENT_SECRET env vars not set - token exchange will not be performed")
+        self.token_url = settings.TOKEN_URL
+        self.client_id = settings.CLIENT_ID
+        self.client_secret = settings.CLIENT_SECRET
+
+    async def exchange(self, subject_token: str, audience: str = None, scope: str = None) -> str:
+        return subject_token
+
+def auth_headers(access_token):
+    headers = {}
+    if not access_token:
+        return headers
+    try:
+        token_exchanger = TokenExchanger()
+        access_token = token_exchanger.exchange(access_token)
+    except Exception as e:
+        logging.debug(f"Error creating token exchanger - will passthrough token")
+
+    headers["Authorization"] = f"Bearer {access_token}"
+    return headers
