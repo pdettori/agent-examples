@@ -133,7 +133,6 @@ class TokenExchanger:
             'client_secret': self.client_secret,
             'subject_token': subject_token,
         }
-        # TODO add audience, scope if populated
         if not audience is None:
             data['audience'] = audience
         if not scope is None:
