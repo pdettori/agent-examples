@@ -1,9 +1,14 @@
-FROM quay.io/pdettori/python:3.11-slim-bookworm
+FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim
 ARG RELEASE_VERSION="main"
-COPY --from=ghcr.io/astral-sh/uv:0.6.16 /uv /bin/
+
 WORKDIR /app
 COPY . .
 RUN uv sync --no-cache --locked --link-mode copy
+
 ENV PRODUCTION_MODE=True \
     RELEASE_VERSION=${RELEASE_VERSION}
-CMD ["uv", "run", "--no-sync", "server"]
+
+RUN chown -R 1001:1001 /app
+USER 1001
+
+CMD ["uv", "run", "--no-sync", ".", "--host", "0.0.0.0", "--port", "8000"]
