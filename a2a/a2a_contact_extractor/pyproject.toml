@@ -6,7 +6,7 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "marvin>=3.0.0", 
-    "a2a-sdk>=0.2.5,<0.3.0",
+    "a2a-sdk>=0.2.5,<0.3.0"
 ]
 
 [tool.uv.sources]
@@ -14,4 +14,11 @@ a2a-samples = { workspace = true }
 
 [tool.ruff.lint]
 extend-select = ["I", "UP"]
+
+[tool.setuptools]
+py-modules = ["agent", "agent_executor", "__main__"]
+
+[build-system]
+requires = ["setuptools>=80.8"]
+build-backend = "setuptools.build_meta"
 

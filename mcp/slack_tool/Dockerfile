@@ -1,16 +1,15 @@
-FROM quay.io/pdettori/python:3.12-slim
-
-RUN apt-get update && apt-get install -y git
-
-COPY --from=ghcr.io/astral-sh/uv:0.6.8 /uv /uvx /bin/
-
-ADD . /app
+FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim
+ARG RELEASE_VERSION="main"
 
 WORKDIR /app
+COPY . .
+RUN uv sync --no-cache --locked --link-mode copy
 
-RUN --mount=type=cache,target=/root/.cache/uv uv sync
+ENV PRODUCTION_MODE=True \
+    RELEASE_VERSION=${RELEASE_VERSION}
 
-ENV PATH="/app/.venv/bin:$PATH"
+RUN chown -R 1001:1001 /app
+USER 1001
 
-CMD ["uv", "run", "slack_tool.py"]
+CMD ["uv", "run", "--no-sync", "slack_tool.py"]
 
