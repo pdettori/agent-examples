@@ -97,8 +97,75 @@ class BearerAuthBackend(AuthenticationBackend):
             logger.debug("Token successfully validated.")
 
             # return user
-            user = SimpleUser(token)
-            return AuthCredentials(["authenticated"]), user
+            user = AgentUser(token=token, claims=claims)
+            return AuthCredentials(user.scopes()), user
         except AuthlibBaseError as e:
             logger.error(f"Token validation failed: {e}")
             raise AuthenticationError(f"Invalid token: {e}, status_code=401")
+
+class AgentUser(SimpleUser):
+    def __init__(self, token, claims) -> None:
+        super().__init__(username=claims.get("sub"))
+        self.access_token = token
+        self.claims = claims
+
+    def scopes(self) -> list[str]:
+        scope = self.claims.get("scope", "")
+        return scope.split()
+
+class TokenExchanger:
+    def __init__(self):
+        if None in [settings.TOKEN_URL, settings.CLIENT_ID, settings.CLIENT_SECRET]:
+            raise Exception("One of TOKEN_URL, CLIENT_ID, CLIENT_SECRET env vars not set - token exchange will not be performed")
+        self.token_url = settings.TOKEN_URL
+        self.client_id = settings.CLIENT_ID
+        self.client_secret = settings.CLIENT_SECRET
+
+    async def exchange(self, subject_token: str, audience: str = None, scope: str = None) -> str:
+        # headers
+        headers = {'Content-Type': 'application/x-www-form-urlencoded'}
+        # data
+        data = {
+            'grant_type': 'urn:ietf:params:oauth:grant-type:token-exchange',
+            'subject_token_type': 'urn:ietf:params:oauth:token-type:access_token',
+            'requested_token_type': 'urn:ietf:params:oauth:token-type:access_token',
+            'client_id': self.client_id,
+            'client_secret': self.client_secret,
+            'subject_token': subject_token,
+        }
+        if not audience is None:
+            data['audience'] = audience
+        if not scope is None:
+            data['scope'] = scope
+        # make token endpoint call
+        logger.debug('Performing token exchange')
+        async with httpx.AsyncClient() as client:
+            try: 
+                response = await client.post(self.token_url, data=data, headers=headers)
+                response.raise_for_status() # raise exception if Http status error
+                token_data = response.json()
+                if "access_token" in token_data:
+                    new_token = token_data["access_token"]
+                    logger.debug(f"Successful token exchange. Using token: {new_token}")
+                    return new_token
+                logger.error("Token exchange failed.")
+                raise AuthenticationError("Token exchange failed. Identity provider response did not include 'access_token'")
+            except httpx.HTTPStatusError as e:
+                logger.error(f"Token exchange failed with status {e.response.status_code}: {e}")
+                raise AuthenticationError("Token endpoint call failed.")
+
+async def auth_headers(access_token, target_audience = None, target_scopes = None):
+    headers = {}
+    if not access_token:
+        return headers
+    try:
+        token_exchanger = TokenExchanger()
+        access_token = await token_exchanger.exchange(access_token, audience=target_audience, scope=target_scopes)
+    except AuthenticationError as e:
+        logging.error(f"Error performing token exchange - returning empty headers: {e}")
+        return headers # 
+    except Exception as e:
+        logging.debug(f"Error creating token exchanger - will passthrough token")
+
+    headers["Authorization"] = f"Bearer {access_token}"
+    return headers

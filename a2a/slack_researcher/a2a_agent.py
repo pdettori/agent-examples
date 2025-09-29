@@ -25,7 +25,7 @@ from starlette.middleware.authentication import AuthenticationMiddleware
 from slack_researcher.config import settings, Settings
 from slack_researcher.event import Event
 from slack_researcher.main import SlackAgent
-from slack_researcher.auth import on_auth_error, BearerAuthBackend
+from slack_researcher.auth import on_auth_error, BearerAuthBackend, auth_headers
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG, stream=sys.stdout, format='%(levelname)s: %(message)s')
@@ -138,7 +138,7 @@ class ResearchExecutor(AgentExecutor):
         Returns:
             None
         """
-        user_token = context.call_context.user.user_name
+        user_token = context.call_context.user._user.access_token
         user_input = [context.get_user_input()]
         task = context.current_task
         if not task:
@@ -164,9 +164,11 @@ class ResearchExecutor(AgentExecutor):
             if settings.MCP_URL:
                 logging.info("Connecting to MCP server at %s", settings.MCP_URL)
 
-                headers={}
-                if user_token:
-                    headers={"Authorization": f"Bearer {user_token}"}
+                headers = await auth_headers(
+                    user_token, 
+                    target_audience=settings.TARGET_AUDIENCE, 
+                    target_scopes=settings.TARGET_SCOPES
+                )
 
                 async with streamablehttp_client(
                     url=settings.MCP_URL,
