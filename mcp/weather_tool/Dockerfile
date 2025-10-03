@@ -12,4 +12,3 @@ RUN chown -R 1001:1001 /app
 USER 1001
 
 CMD ["uv", "run", "--no-sync", "weather_tool.py"]
-
