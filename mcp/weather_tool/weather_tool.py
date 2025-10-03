@@ -21,7 +21,7 @@ def get_weather(city: str) -> str:
     weather_params = {
         "latitude": latitude,
         "longitude": longitude,
-        "temperature_unit": "celsius",
+        "temperature_unit": "fahrenheit",
         "current_weather": True
     }
     weather_response = requests.get(weather_url, params=weather_params)
