@@ -11,11 +11,9 @@ from a2a.server.tasks import InMemoryTaskStore, TaskUpdater
 from a2a.types import AgentCapabilities, AgentCard, AgentSkill, TaskState, TextPart
 from a2a.utils import new_agent_text_message, new_task
 from openinference.instrumentation.langchain import LangChainInstrumentor
-from pydantic import AnyUrl
 from langchain_core.messages import HumanMessage
 
 from weather_service.graph import get_graph, get_mcpclient
-from keycloak import KeycloakOpenID
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -116,9 +114,9 @@ class WeatherExecutor(AgentExecutor):
             output = None
             # Test MCP connection first
             logger.info(f'Attempting to connect to MCP server at: {os.getenv("MCP_URL", "http://localhost:8000/sse")}')
-            
+
             mcpclient = get_mcpclient()
-            
+
             # Try to get tools to verify connection
             try:
                 tools = await mcpclient.get_tools()
@@ -127,7 +125,7 @@ class WeatherExecutor(AgentExecutor):
                 logger.error(f'Failed to connect to MCP server: {tool_error}')
                 await event_emitter.emit_event("Error: Cannot connect to MCP weather service at {os.getenv('MCP_URL', 'http://localhost:8000/sse')}. Please ensure the weather MCP server is running. Error: {tool_error}", failed=True)
                 return
-                
+
             graph = await get_graph(mcpclient)
             async for event in graph.astream(input, stream_mode="updates"):
                 await event_emitter.emit_event(
@@ -151,7 +149,7 @@ class WeatherExecutor(AgentExecutor):
         Not implemented
         """
         raise Exception("cancel not supported")
-    
+
 def run():
     """
     Runs the A2A Agent application.
