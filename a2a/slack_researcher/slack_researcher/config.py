@@ -94,7 +94,7 @@ class Settings(BaseSettings):
         except FileNotFoundError:
             logging.warning("CLIENT_SECRET file not found at {self.secret_file_path}")
         except Exception as e:
-            logging.error(f"Error reading CLIENT_SECRET: {e}")
+            logging.error(f"Error reading CLIENT_SECRET file: {e}")
 
         return self
 
