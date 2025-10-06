@@ -14,14 +14,13 @@ logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO"), stream=sys.stdout, for
 @mcp.tool(annotations={"readOnlyHint": True, "destructiveHint": False, "idempotentHint": True})
 def get_weather(city: str) -> str:
     """Get weather info for a city"""
-    logger.info(f"Getting weather info for city '{city}'.")
+    logger.debug(f"Getting weather info for city '{city}'.")
     base_url = "https://geocoding-api.open-meteo.com/v1/search"
     params = {"name": city, "count": 1}
     response = requests.get(base_url, params=params, timeout=10)
     data = response.json()
-    if not data["results"]:
-        logger.error(f"City {city} not found")
-        return "City not found"
+    if not data or not "results" in data:
+        return [{"error": f"City {city} not found"}]
     latitude = data["results"][0]["latitude"]
     longitude = data["results"][0]["longitude"]
 
