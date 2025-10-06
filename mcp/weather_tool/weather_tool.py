@@ -1,3 +1,5 @@
+"Weather MCP tool example"
+
 import os
 import json
 import requests
@@ -5,12 +7,12 @@ from fastmcp import FastMCP
 
 mcp = FastMCP("Weather")
 
-@mcp.tool()
+@mcp.tool(annotations={"readOnlyHint": True, "destructiveHint": False, "idempotentHint": True})
 def get_weather(city: str) -> str:
     """Get weather info for a city"""
     base_url = "https://geocoding-api.open-meteo.com/v1/search"
     params = {"name": city, "count": 1}
-    response = requests.get(base_url, params=params)
+    response = requests.get(base_url, params=params, timeout=10)
     data = response.json()
     if not data["results"]:
         return "City not found"
@@ -24,7 +26,7 @@ def get_weather(city: str) -> str:
         "temperature_unit": "fahrenheit",
         "current_weather": True
     }
-    weather_response = requests.get(weather_url, params=weather_params)
+    weather_response = requests.get(weather_url, params=weather_params, timeout=10)
     weather_data = weather_response.json()
 
     return json.dumps(weather_data["current_weather"])
@@ -32,6 +34,7 @@ def get_weather(city: str) -> str:
 # host can be specified with HOST env variable
 # transport can be specified with MCP_TRANSPORT env variable (defaults to streamable-http)
 def run_server():
+    "Run the MCP server"
     transport = os.getenv("MCP_TRANSPORT", "streamable-http")
     host = os.getenv("HOST", "0.0.0.0")
     port = int(os.getenv("PORT", "8000"))
