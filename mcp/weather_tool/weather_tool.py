@@ -1,20 +1,26 @@
 "Weather MCP tool example"
 
-import os
 import json
+import logging
+import os
 import requests
+import sys
 from fastmcp import FastMCP
 
 mcp = FastMCP("Weather")
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO"), stream=sys.stdout, format='%(levelname)s: %(message)s')
 
 @mcp.tool(annotations={"readOnlyHint": True, "destructiveHint": False, "idempotentHint": True})
 def get_weather(city: str) -> str:
     """Get weather info for a city"""
+    logger.info(f"Getting weather info for city '{city}'.")
     base_url = "https://geocoding-api.open-meteo.com/v1/search"
     params = {"name": city, "count": 1}
     response = requests.get(base_url, params=params, timeout=10)
     data = response.json()
     if not data["results"]:
+        logger.error(f"City {city} not found")
         return "City not found"
     latitude = data["results"][0]["latitude"]
     longitude = data["results"][0]["longitude"]
