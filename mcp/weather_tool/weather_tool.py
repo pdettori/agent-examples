@@ -20,7 +20,7 @@ def get_weather(city: str) -> str:
     response = requests.get(base_url, params=params, timeout=10)
     data = response.json()
     if not data or not "results" in data:
-        return [{"error": f"City {city} not found"}]
+        return f"City {city} not found"
     latitude = data["results"][0]["latitude"]
     longitude = data["results"][0]["longitude"]
 
