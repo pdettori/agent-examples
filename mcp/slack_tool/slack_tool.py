@@ -31,11 +31,11 @@ def slack_client_from_bot_token(bot_token):
 
 def get_slack_client(access_token=None):
     if ADMIN_SLACK_BOT_TOKEN is None:
-        logger.debug(f"No ADMIN_SLACK_BOT_TOKEN configured - automatically configuring based on SLACK_BOT_TOKEN. ")
+        logger.debug("No ADMIN_SLACK_BOT_TOKEN configured - automatically configuring based on SLACK_BOT_TOKEN. ")
         return slack_client_from_bot_token(SLACK_BOT_TOKEN)
     # we do fine-grained authz
     if access_token is None:
-        logger.error(f"ADMIN_SLACK_BOT_TOKEN configured, but no access token passed. ")
+        logger.error("ADMIN_SLACK_BOT_TOKEN configured, but no access token passed. ")
         return None
     
     # Access token is now claims dict from FastMCP AccessToken
