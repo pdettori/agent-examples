@@ -22,7 +22,6 @@ from a2a.server.tasks import InMemoryTaskStore, TaskUpdater
 from a2a.types import AgentCapabilities, AgentCard, AgentSkill, TaskState, TextPart, SecurityScheme, HTTPAuthSecurityScheme
 from a2a.utils import new_agent_text_message, new_task
 
-from starlette.authentication import AuthCredentials, SimpleUser, AuthenticationBackend
 from starlette.middleware.authentication import AuthenticationMiddleware
 
 from git_issue_agent.auth import on_auth_error, BearerAuthBackend, auth_headers
@@ -32,25 +31,6 @@ from git_issue_agent.main import GitIssueAgent
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=settings.LOG_LEVEL, stream=sys.stdout, format='%(levelname)s: %(message)s')
-
-class BearerAuthBackend(AuthenticationBackend):
-    """ Very temporary demo to grab auth token and print it"""
-    async def authenticate(self, conn):
-        try:
-            auth = conn.headers.get("authorization")
-            if not auth or not auth.lower().startswith("bearer "):
-                print("No bearer token provided")
-                return
-            token = auth.split(" ", 1)[1]
-            print(f"TOKEN: {token}")
-
-            # Storing the token as the username - not a real life scenario - just demo-ing the passing of creds
-            user = SimpleUser(token)
-            return AuthCredentials(["authenticated"]), user
-        except Exception as e:
-            logger.error("Exception when attempting to obtain user token")
-            logger.error(e)
-    
 
 def get_agent_card(host: str, port: int):
     """Returns the Agent Card for the AG2 Agent."""
@@ -158,14 +138,10 @@ class GithubExecutor(AgentExecutor):
         Returns:
             None
         """
-        ###
-        # commenting this out for now since we have external github MCP.
-        # in the future we need to figure out the token exchange story for this scenario
-        #
-        #if settings.JWKS_URI:
-        #    user_token = context.call_context.user._user.access_token
-        #else:
-        user_token = settings.GITHUB_TOKEN
+        if settings.JWKS_URI:
+            user_token = context.call_context.user._user.access_token
+        else: 
+            user_token = settings.GITHUB_TOKEN
         user_input = [context.get_user_input()]
         task = context.current_task
         if not task:
